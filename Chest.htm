@@ -1,0 +1,461 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr" xml:lang="fr">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Dés</title>
+
+    <script type="text/javascript" src="/FichiersWebGL/WebGl.js"></script>
+    <script type="text/javascript" src="/FichiersWebGL/ShaderCouleursTextures.js"></script>
+    <script type="text/javascript" src="/FichiersWebGL/glMatrix-0.9.5.min.js"></script>
+    <script type="text/javascript" src="/FichiersWebGL/Transformations.js"></script>
+    <script type="text/javascript" src="/FichiersWebGL/Camera.js"></script>
+    <script type="text/javascript" src="/FichiersWebGL/Textures.js"></script>
+    <script type="text/javascript">
+
+        let objgl = null;
+        let objProgShaders = null;
+        let objScene3D = null;
+
+        const TEX_TRANSPARENT = 0;
+        const TEX_DE1 = 1;
+        const TEX_DE2 = 2; 
+        const TEX_DE3 = 3;
+        const TEX_DE4 = 4;
+        const TEX_DE5 = 5;
+        const TEX_DE6 = 6;
+
+        async function demarrer() {
+            const objCanvas = document.getElementById('monCanvas');
+            objgl = initWebGL(objCanvas);  // Initialise le contexte WebGL
+            objProgShaders = initShaders(objgl);
+            objScene3D = await initScene3D(objgl); // Créer la scène
+
+            effacerCanevas(objgl);
+            dessiner(objgl, objProgShaders, objScene3D);
+        }
+
+       async function initScene3D(objgl) {
+            const objScene3D = new Object();
+            const tabObjets3D = new Array();
+
+            // Mettre les textures dans la scène
+            objScene3D.textures = await creerTextures(objgl, [
+                '/Textures/Transparent.gif',
+                '/Textures/chestFace.jpg',
+                '/Textures/chestSides1.jpg',
+                '/Textures/chestSides2.jpg',
+                '/Textures/chestSides3.jpg',
+                '/Textures/chestTop.jpg',
+                '/Textures/chestBottom.jpg'
+            ]);
+
+            // Créer 1 cube
+            const objet3D = new Object();
+            objet3D.vertex = creerCube(objgl);
+            objet3D.couleurs = creerCouleursCube(objgl);
+            objet3D.maillage = null;
+            objet3D.texels = creerTexelsCube(objgl);
+            objet3D.transformations = creerTransformations();
+            tabObjets3D.push(objet3D);
+
+            // Mettre les objets 3D sur la scène
+            objScene3D.tabObjets3D = tabObjets3D;
+
+            // La caméra
+            const camera = creerCamera();
+            setPositionsCameraXYZ([0, 0, 10], camera);
+            setCiblesCameraXYZ([0, 0, 0], camera);
+            setOrientationsXYZ([0, 1, 0], camera);
+
+            // Mettre la caméra sur la scène
+            objScene3D.camera = camera;
+
+            return objScene3D;
+        }
+
+        function dessiner(objgl, objProgShaders, objScene3D) {
+            // La vue
+            objgl.viewport(0, 0, objgl.drawingBufferWidth, objgl.drawingBufferHeight);
+
+            // Matrice de projection
+            const matProjection = mat4.create();
+            const fltRapportCanevas = objgl.drawingBufferWidth / objgl.drawingBufferHeight;
+            mat4.perspective(45, fltRapportCanevas, 0.01, 100, matProjection);
+
+            // Relier la matrice aux shaders
+            objgl.uniformMatrix4fv(objProgShaders.matProjection, false, matProjection);
+
+            for (let i = 0; i < objScene3D.tabObjets3D.length; i++) {
+                const vertex = objScene3D.tabObjets3D[i].vertex;
+                const couleurs = objScene3D.tabObjets3D[i].couleurs;
+                const texels = objScene3D.tabObjets3D[i].texels;
+                const maillage = objScene3D.tabObjets3D[i].maillage;
+                const transformations = objScene3D.tabObjets3D[i].transformations;
+
+                // Matrice du modèle            
+                const matModeleVue = mat4.create();
+                mat4.identity(matModeleVue);
+
+                // Placer la caméra sur la scène
+                mat4.lookAt(getPositionsCameraXYZ(objScene3D.camera),
+                    getCiblesCameraXYZ(objScene3D.camera),
+                    getOrientationsXYZ(objScene3D.camera),
+                    matModeleVue);
+
+                // Appliquer les transformations sur le modèle 
+                mat4.translate(matModeleVue, getPositionsXYZ(transformations));
+                mat4.scale(matModeleVue, getEchellesXYZ(transformations));
+                mat4.rotateX(matModeleVue, getAngleX(transformations) * Math.PI / 180);
+                mat4.rotateY(matModeleVue, getAngleY(transformations) * Math.PI / 180);
+                mat4.rotateZ(matModeleVue, getAngleZ(transformations) * Math.PI / 180);
+
+                // Relier la matrice aux shaders
+                objgl.uniformMatrix4fv(objProgShaders.matModeleVue, false, matModeleVue);
+
+                if (maillage == null)
+                    // Dessiner les sous-objets
+                    for (let j = 0; j < vertex.length; j++) {
+
+                        // Relier les vertex aux shaders
+                        objgl.bindBuffer(objgl.ARRAY_BUFFER, vertex[j]);
+                        objgl.vertexAttribPointer(objProgShaders.posVertex, 3, objgl.FLOAT, false, 0, 0);
+                        const intNbVertex = (objgl.getBufferParameter(objgl.ARRAY_BUFFER, objgl.BUFFER_SIZE) / 4) / 3;
+
+                        // Relier les couleurs aux shaders
+                        objgl.bindBuffer(objgl.ARRAY_BUFFER, couleurs[j]);
+                        objgl.vertexAttribPointer(objProgShaders.couleurVertex, 4, objgl.FLOAT, false, 0, 0);
+
+                        // Activer la texture
+                        objgl.activeTexture(objgl.TEXTURE0 + texels[j].intNoTexture);
+                        objgl.bindTexture(objgl.TEXTURE_2D, objScene3D.textures[texels[j].intNoTexture]);
+
+                        // Relier les texels aux shaders
+                        objgl.bindBuffer(objgl.ARRAY_BUFFER, texels[j]);
+                        objgl.vertexAttribPointer(objProgShaders.posTexel, 2, objgl.FLOAT, false, 0, 0);
+
+                        // Relier le no de texture et le taux de couleur aux shaders                 
+                        objgl.uniform1i(objProgShaders.noTexture, texels[j].intNoTexture);
+                        objgl.uniform1f(objProgShaders.pcCouleurTexel, texels[j].pcCouleurTexel);
+
+                        // Dessiner
+                        objgl.drawArrays(vertex[j].typeDessin, 0, intNbVertex);
+                    }
+                else { // Dessiner le maillage
+
+                    // Relier les vertex aux shaders
+                    objgl.bindBuffer(objgl.ARRAY_BUFFER, vertex);
+                    objgl.vertexAttribPointer(objProgShaders.posVertex, 3, objgl.FLOAT, false, 0, 0);
+
+                    // Relier les couleurs aux shaders
+                    objgl.bindBuffer(objgl.ARRAY_BUFFER, couleurs);
+                    objgl.vertexAttribPointer(objProgShaders.couleurVertex, 4, objgl.FLOAT, false, 0, 0)
+
+                    // Activer la texture
+                    objgl.activeTexture(objgl.TEXTURE0 + texels.intNoTexture);
+                    objgl.bindTexture(objgl.TEXTURE_2D, objScene3D.textures[texels.intNoTexture]);
+
+                    // Relier les texels aux shaders
+                    objgl.bindBuffer(objgl.ARRAY_BUFFER, texels);
+                    objgl.vertexAttribPointer(objProgShaders.posTexel, 2, objgl.FLOAT, false, 0, 0);
+
+                    // Relier le no de texture et le taux de couleur aux shaders                 
+                    objgl.uniform1i(objProgShaders.noTexture, texels.intNoTexture);
+                    objgl.uniform1f(objProgShaders.pcCouleurTexel, texels.pcCouleurTexel);
+
+                    // Sélectionner le maillage qu'on va utiliser pour les triangles et les droites
+                    objgl.bindBuffer(objgl.ELEMENT_ARRAY_BUFFER, maillage);
+
+                    // Dessiner les triangles
+                    objgl.drawElements(objgl.TRIANGLES, maillage.intNbTriangles * 3, objgl.UNSIGNED_SHORT, 0);
+                    // Dessiner les droites à la suite des triangles
+                    objgl.drawElements(objgl.LINES, maillage.intNbDroites * 2, objgl.UNSIGNED_SHORT, maillage.intNbTriangles * 2 * 3);
+                }
+            }
+        }
+
+        function effacerCanevas(objgl) {
+            // Met la couleur d'effacement au noir et complétement opaque
+            objgl.clearColor(0.0, 0.0, 0.0, 1.0);
+            // Efface les couleurs et le buffer de profondeur.
+            objgl.clear(objgl.COLOR_BUFFER_BIT | objgl.DEPTH_BUFFER_BIT);
+        }
+
+        function creerCube(objgl) {
+            var tabVertex = new Array();
+
+            // Face avant pleine
+            tabVertex[0] = [
+                0.0, 0.0, 1.0, // Centre du plan 
+                1.0, 1.0, 1.0,
+                -1.0, 1.0, 1.0,
+                -1.0, -1.0, 1.0,
+                1.0, -1.0, 1.0,
+                1.0, 1.0, 1.0
+            ];
+
+            // Face arrère pleine
+            tabVertex[1] = [
+                0.0, 0.0, -1.0, // Centre du plan
+                1.0, 1.0, -1.0,
+                -1.0, 1.0, -1.0,
+                -1.0, -1.0, -1.0,
+                1.0, -1.0, -1.0,
+                1.0, 1.0, -1.0
+            ];
+
+            // Contour avant
+            tabVertex[2] = [
+                1.0, 1.0, 1.0,
+                -1.0, 1.0, 1.0,
+                -1.0, -1.0, 1.0,
+                1.0, -1.0, 1.0
+            ];
+
+            // Contour arrière
+            tabVertex[3] = [
+                1.0, 1.0, -1.0,
+                -1.0, 1.0, -1.0,
+                -1.0, -1.0, -1.0,
+                1.0, -1.0, -1.0
+            ];
+
+            // Droites reliées aux 2 faces
+            tabVertex[4] = [
+                1.0, 1.0, -1.0, 1.0, 1.0, 1.0,
+                -1.0, 1.0, -1.0, -1.0, 1.0, 1.0,
+                1.0, -1.0, -1.0, 1.0, -1.0, 1.0,
+                -1.0, -1.0, -1.0, -1.0, -1.0, 1.0
+            ];
+
+            // Face du dessus
+            tabVertex[5] = [
+                0.0, 1.0, 0.0, // Centre du plan 
+                -1.0, 1.0, -1.0,
+                1.0, 1.0, -1.0,
+                1.0, 1.0, 1.0,
+                -1.0, 1.0, 1.0,
+                -1.0, 1.0, -1.0
+            ];
+
+            // Face du dessous
+            tabVertex[6] = [
+                0.0, -1.0, 0.0, // Centre du plan 
+                -1.0, -1.0, -1.0,
+                1.0, -1.0, -1.0,
+                1.0, -1.0, 1.0,
+                -1.0, -1.0, 1.0,
+                -1.0, -1.0, -1.0
+            ];
+
+            // Face de gauche
+            tabVertex[7] = [
+                -1.0, 0.0, 0.0, // Centre du plan
+                -1.0, 1.0, -1.0,
+                -1.0, 1.0, 1.0,
+                -1.0, -1.0, 1.0,
+                -1.0, -1.0, -1.0,
+                -1.0, 1.0, -1.0
+            ];
+
+            // Face de droite
+            tabVertex[8] = [
+                1.0, 0.0, 0.0, // Centre du plan
+                1.0, 1.0, -1.0,
+                1.0, 1.0, 1.0,
+                1.0, -1.0, 1.0,
+                1.0, -1.0, -1.0,
+                1.0, 1.0, -1.0
+            ];
+
+            // Création des tampons
+            var tabObjCube = new Array();
+            for (var i = 0; i < 9; i++) {
+                tabObjCube[i] = objgl.createBuffer();
+                objgl.bindBuffer(objgl.ARRAY_BUFFER, tabObjCube[i]);
+                objgl.bufferData(objgl.ARRAY_BUFFER, new Float32Array(tabVertex[i]), objgl.STATIC_DRAW);
+                tabObjCube[i].typeDessin = (i < 2) || (i > 4) ? objgl.TRIANGLE_FAN : ((i < 4) ? objgl.LINE_LOOP : objgl.LINES);
+            }
+
+            return tabObjCube;
+        }
+
+        function creerCouleursCube(objgl) {
+            var tabCouleurs = new Array();
+
+            // Couleurs face avant pleine
+            tabCouleurs[0] = [1.0, 1.0, 1.0, 1.0]; // Blanc 
+            for (var i = 1; i < 6; i++)
+                tabCouleurs[0] = tabCouleurs[0].concat([1.0, 0.0, 0.0, 1.0]); // Rouge
+
+            // Couleurs face arrière pleine
+            tabCouleurs[1] = [1.0, 1.0, 1.0, 1.0]; // Blanc
+            for (var i = 1; i < 6; i++)
+                tabCouleurs[1] = tabCouleurs[1].concat([0.0, 1.0, 0.0, 1.0]); // Vert
+
+            // Couleurs contour avant
+            tabCouleurs[2] = [];
+            for (var i = 0; i < 4; i++)
+                tabCouleurs[2] = tabCouleurs[2].concat([0.0, 0.0, 0.0, 1.0]); // Blanc
+
+            // Couleurs contour arrière
+            tabCouleurs[3] = tabCouleurs[2];
+
+            // Couleurs droites reliées aux 2 faces
+            tabCouleurs[4] = tabCouleurs[2].concat(tabCouleurs[2]);
+
+            tabCouleurs[5] = [1.0, 1.0, 1.0, 1.0];
+            for (var i = 1; i < 6; i++)
+                tabCouleurs[5] = tabCouleurs[5].concat([0.0, 0.0, 1.0, 1.0]);
+
+            tabCouleurs[6] = [1.0, 1.0, 1.0, 1.0];
+            for (var i = 1; i < 6; i++)
+                tabCouleurs[6] = tabCouleurs[6].concat([0.0, 1.0, 1.0, 1.0]);
+
+            tabCouleurs[7] = [1.0, 1.0, 1.0, 1.0];
+            for (var i = 1; i < 6; i++)
+                tabCouleurs[7] = tabCouleurs[7].concat([1.0, 0.0, 1.0, 1.0]);
+
+            tabCouleurs[8] = [1.0, 1.0, 1.0, 1.0];
+            for (var i = 1; i < 6; i++)
+                tabCouleurs[8] = tabCouleurs[8].concat([1.0, 1.0, 0.0, 1.0]);
+
+            // Création des tampons
+            var tabObjCouleursCube = new Array();
+            for (var i = 0; i < 9; i++) {
+                tabObjCouleursCube[i] = objgl.createBuffer();
+                objgl.bindBuffer(objgl.ARRAY_BUFFER, tabObjCouleursCube[i]);
+                objgl.bufferData(objgl.ARRAY_BUFFER, new Float32Array(tabCouleurs[i]), objgl.STATIC_DRAW);
+            }
+
+            return tabObjCouleursCube;
+        }
+
+        function creerTexelsCube(objgl) {
+            const tabTexels = new Array();
+            
+            // Coordonnées de texels pour toutes les faces
+            const texelsBase = [
+                0.5, 0.5,  // Centre
+                1.0, 0.0,  // Haut droite
+                0.0, 0.0,  // Haut gauche
+                0.0, 1.0,  // Bas gauche
+                1.0, 1.0,  // Bas droite
+                1.0, 0.0   // Haut droite
+            ];
+        
+            // Face avant (1)
+            tabTexels[0] = texelsBase;
+            
+            // Face arrière (6) - opposé à 1
+            tabTexels[1] = texelsBase;
+            
+            // Contours (transparent)
+            tabTexels[2] = [0,0, 0,1, 1,1, 1,0];  // Avant
+            tabTexels[3] = [0,0, 0,1, 1,1, 1,0];  // Arrière
+            tabTexels[4] = [0,0, 0,1, 1,1, 1,0, 0,0, 0,1, 1,1, 1,0];  // Arêtes
+            
+            // Face droite (2)
+            tabTexels[5] = texelsBase;
+            
+            // Face gauche (5) - opposé à 2
+            tabTexels[6] = texelsBase;
+            
+            // Face dessus (3)
+            tabTexels[7] = texelsBase;
+            
+            // Face dessous (4) - opposé à 3
+            tabTexels[8] = texelsBase;
+        
+            // Création des tampons
+            const tabTexelsCube = new Array();
+            for (let i = 0; i < 9; i++) {
+                tabTexelsCube[i] = objgl.createBuffer();
+                objgl.bindBuffer(objgl.ARRAY_BUFFER, tabTexelsCube[i]);
+                objgl.bufferData(objgl.ARRAY_BUFFER, new Float32Array(tabTexels[i]), objgl.STATIC_DRAW);
+                
+                // Attribution des textures selon les faces
+                if (i === 0) { // Face avant
+                    tabTexelsCube[i].intNoTexture = TEX_DE1;
+                    tabTexelsCube[i].pcCouleurTexel = 1.0;
+                }
+                else if (i === 1) { // Face arrière
+                    tabTexelsCube[i].intNoTexture = TEX_DE2;
+                    tabTexelsCube[i].pcCouleurTexel = 1.0;
+                }
+                else if (i === 5) { // Face droite
+                    tabTexelsCube[i].intNoTexture = TEX_DE4;
+                    tabTexelsCube[i].pcCouleurTexel = 1.0;
+                }
+                else if (i === 6) { // Face gauche
+                    tabTexelsCube[i].intNoTexture = TEX_DE6;
+                    tabTexelsCube[i].pcCouleurTexel = 1.0;
+                }
+                else if (i === 7) { // Face dessus
+                    tabTexelsCube[i].intNoTexture = TEX_DE3;
+                    tabTexelsCube[i].pcCouleurTexel = 1.0;
+                }
+                else if (i === 8) { // Face dessous
+                    tabTexelsCube[i].intNoTexture = TEX_DE5;
+                    tabTexelsCube[i].pcCouleurTexel = 1.0;
+                }
+                else { // Contours
+                    tabTexelsCube[i].intNoTexture = TEX_TRANSPARENT;
+                    tabTexelsCube[i].pcCouleurTexel = 0.0;
+                }
+            }
+        
+            return tabTexelsCube;
+        }
+
+        function tournerObjet() {
+            const transformations = objScene3D.tabObjets3D[0].transformations;
+
+            if (event.keyCode == 37 || event.keyCode == 39) {
+                // 37:  Flèche-à-gauche; 39:Flèche-à-droite
+                const intDirection = (event.keyCode == 37) ? -1 : 1;
+                setAngleY(getAngleY(transformations) + 2 * intDirection, transformations);
+
+
+            }
+            else if (event.keyCode == 38 || event.keyCode == 40) {
+                // 38:  Flèche-en-haut; 40:Flèche-en-bas
+                const intDirection = (event.keyCode == 40) ? 1 : -1;
+                setAngleX(getAngleX(transformations) + 2 * intDirection, transformations);
+            }
+
+            effacerCanevas(objgl);
+            dessiner(objgl, objProgShaders, objScene3D);
+        }
+
+    </script>
+</head>
+
+<body onload="demarrer()">
+    <header class="sTexteCentre sLargeurDiv sEntete">
+        <p>
+            <span class="sTitreApp">
+                Chest<br />
+            </span> par
+            <span class="sAuteurApp">
+                Filip George Nicolau
+            </span>
+        </p>
+    </header>
+
+    <canvas id="monCanvas" width="640" height="640" tabIndex="1" onkeydown="tournerObjet(); return false">
+        Votre navigateur ne supporte pas la balise canvas
+    </canvas>
+
+    <footer class="sLargeurDiv sPiedDePage">
+        <p>
+          
+
+            <br />
+            &copy; 2025
+        </p>
+    </footer>
+</body>
+
+</html>
