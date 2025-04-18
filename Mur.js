@@ -82,3 +82,20 @@ function creerMaillageMur(objgl) {
 
     return objMaillage;
 }
+
+function estMur(x, z) {
+    const margin = 0.1;
+
+    if (x < 0 || z < 0 || z >= map.length || x >= map[0].length)
+        return true;
+
+    const cell = map[Math.floor(z)][Math.floor(x)];
+
+    return (
+        cell === "w" || cell === "b" || cell === "d" ||
+        map[Math.floor(z)][Math.floor(x + margin)] === "w" ||
+        map[Math.floor(z)][Math.floor(x - margin)] === "w" ||
+        map[Math.floor(z + margin)][Math.floor(x)] === "w" ||
+        map[Math.floor(z - margin)][Math.floor(x)] === "w"
+    );
+}
