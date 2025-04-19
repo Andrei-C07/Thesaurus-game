@@ -17,8 +17,9 @@
     <script type="text/javascript" src="Map.js"></script>
     <script type="text/javascript" src="Plafond.js"></script>
     <script type="text/javascript" src="Mur.js"></script>
-
+    <script type="text/javascript" src="IndicateurMap.js"></script>
     <script type="text/javascript" src="Sol.js"></script>
+
     <script type="text/javascript">
 
         let objgl = null;
@@ -36,6 +37,10 @@
         let cameraSauvPos = null;
         let cameraSauvTarget = null;
         let estEnVueMap = false;
+        let posJoueur = null;
+        let cibleJoueur = null;
+        let posJoueurLive = null;
+        let cibleJoueurLive = null;
 
         async function demarrer() {
             const objCanvas = document.getElementById('monCanvas');
@@ -113,14 +118,34 @@
             // Positionner la caméra sur le "A"
             setPositionsCameraXYZ([spawnX, 0.6 , spawnZ], camera); 
             setCiblesCameraXYZ([spawnX, 0.6, spawnZ - 0.5], camera);
+            posJoueur = [spawnX, 0.6, spawnZ];
+            cibleJoueur = [spawnX, 0.6, spawnZ - 0.5];
+
             setOrientationsXYZ([0, 1, 0], camera);
             objScene3D.camera = camera;
 
+            const indicateur = creerObj3DIndicateur(objgl);
+            tabObjets3D.push(indicateur);
+            objScene3D.indicateur = indicateur;
+            //setEchellesXYZ([1, 1, 1], objScene3D.transformations);
+            
             return objScene3D;
         }
         function dessiner(objgl, objProgShaders, objScene3D) {
             // La vue
             objgl.viewport(0, 0, objgl.drawingBufferWidth, objgl.drawingBufferHeight);
+            if (estEnVueMap && objScene3D.indicateur) {
+                const pos = posJoueurLive;
+                const cible = cibleJoueurLive;
+                const dx = cible[0] - pos[0];
+                const dz = cible[2] - pos[2];
+                const angle = Math.atan2(dx, dz) * 180 / Math.PI;
+
+                setPositionX(pos[0], objScene3D.indicateur.transformations);
+                setPositionZ(pos[2], objScene3D.indicateur.transformations);
+                setPositionY(35, objScene3D.indicateur.transformations); 
+                setAngleY(angle, objScene3D.indicateur.transformations);
+            }
 
             // Matrice de projection
             const matProjection = mat4.create();
@@ -131,6 +156,8 @@
             objgl.uniformMatrix4fv(objProgShaders.matProjection, false, matProjection);
 
             for (let i = 0; i < objScene3D.tabObjets3D.length; i++) {
+                //if (objScene3D.tabObjets3D[i].estIndicateur && !estEnVueMap) continue;
+
                 const vertex = objScene3D.tabObjets3D[i].vertex;
                 const couleurs = objScene3D.tabObjets3D[i].couleurs;
                 const texels = objScene3D.tabObjets3D[i].texels;
@@ -242,10 +269,24 @@
                 cameraSauvPos = [...getPositionsCameraXYZ(camera)];
                 cameraSauvTarget = [...getCiblesCameraXYZ(camera)];
                 estEnVueMap = true;
-
+                posJoueurLive = getPositionsCameraXYZ(objScene3D.camera);
+                cibleJoueurLive = getCiblesCameraXYZ(objScene3D.camera);
                 setPositionsCameraXYZ([15.5, 40, 15.5], camera); // centrer et elever
                 setCiblesCameraXYZ([15.5, 0, 15.5], camera); // regarde vers le bas
                 setOrientationsXYZ([0, 0, -1], camera); // vers le sol
+
+                if (objScene3D.indicateur) {
+                    const pos = getPositionsCameraXYZ(camera);
+                    const cible = getCiblesCameraXYZ(camera);
+                    const dx = cible[0] - pos[0];
+                    const dz = cible[2] - pos[2];
+                    const angle = Math.atan2(dx, dz) * 180 / Math.PI;
+
+                    setPositionX(pos[0], objScene3D.indicateur.transformations);
+                    setPositionZ(pos[2], objScene3D.indicateur.transformations);
+                    setPositionY(35, objScene3D.indicateur.transformations);
+                    setAngleY(angle, objScene3D.indicateur.transformations);
+                }
 
                 effacerCanevas(objgl);
                 dessiner(objgl, objProgShaders, objScene3D);
