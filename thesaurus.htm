@@ -143,8 +143,11 @@
 
                 setPositionX(pos[0], objScene3D.indicateur.transformations);
                 setPositionZ(pos[2], objScene3D.indicateur.transformations);
-                setPositionY(35, objScene3D.indicateur.transformations); 
+                setPositionY(1, objScene3D.indicateur.transformations); 
                 setAngleY(angle, objScene3D.indicateur.transformations);
+            }else{
+                //pour ne pas voir l'indicateur quand nous somme en vue premiere personne
+                setPositionY(-1, objScene3D.indicateur.transformations); 
             }
 
             // Matrice de projection
