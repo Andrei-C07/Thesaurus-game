@@ -1,7 +1,7 @@
 function creerObj3DPlafond(objgl, intNoTexture, hauteur = 2.5) {
     const obj3DPlafond = new Object();
-    obj3DPlafond.fltLargeur = 31;
-    obj3DPlafond.fltProfondeur = 31;
+    obj3DPlafond.fltLargeur = 1000;
+    obj3DPlafond.fltProfondeur = 1000;
     obj3DPlafond.fltHauteur = hauteur;
 
     obj3DPlafond.vertex = creerVertexPlafond(objgl, obj3DPlafond.fltLargeur, obj3DPlafond.fltProfondeur, obj3DPlafond.fltHauteur);

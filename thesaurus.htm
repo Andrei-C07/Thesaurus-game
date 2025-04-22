@@ -27,7 +27,7 @@
         let objScene3D = null;
 
 
-        const tabImages = ['/Textures/Transparent.gif', '/Textures/Sol.jpeg', '/Textures/Ciel.png', '/Textures/Mur.png', '/Textures/MurOuvrable.jpg'];
+        const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png', '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png'];
         const TEX_TRANSPARENT = 0;
         const TEX_SOL = 1;
         const TEX_CIEL = 2;
@@ -58,7 +58,7 @@
 
             objScene3D.textures = await creerTextures(objgl, tabImages);
 
-
+   
             const obj3DSol = creerObj3DSol(objgl, TEX_SOL);
             const obj3DPlafond = creerObj3DPlafond(objgl, TEX_CIEL, 40); //tu peut regler l'hauteur
             tabObjets3D.push(obj3DPlafond);
@@ -153,7 +153,7 @@
             // Matrice de projection
             const matProjection = mat4.create();
             const fltRapportCanevas = objgl.drawingBufferWidth / objgl.drawingBufferHeight;
-            mat4.perspective(45, fltRapportCanevas, 0.01, 100, matProjection);
+            mat4.perspective(45, fltRapportCanevas, 0.01, 1000, matProjection);
 
             // Relier la matrice aux shaders
             objgl.uniformMatrix4fv(objProgShaders.matProjection, false, matProjection);
@@ -277,7 +277,6 @@
                 setPositionsCameraXYZ([15.5, 40, 15.5], camera); // centrer et elever
                 setCiblesCameraXYZ([15.5, 0, 15.5], camera); // regarde vers le bas
                 setOrientationsXYZ([0, 0, -1], camera); // vers le sol
-
                 if (objScene3D.indicateur) {
                     const pos = getPositionsCameraXYZ(camera);
                     const cible = getCiblesCameraXYZ(camera);
@@ -297,7 +296,6 @@
             }
             // Page Down -> Retour caméra joueur
             if (event.key === "2") {
-
                 if (cameraSauvPos && cameraSauvTarget && estEnVueMap) {
                     setPositionsCameraXYZ(cameraSauvPos, camera);
                     setCiblesCameraXYZ(cameraSauvTarget, camera);
