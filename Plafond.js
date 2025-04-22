@@ -15,9 +15,9 @@ function creerObj3DPlafond(objgl, intNoTexture, hauteur = 2.5) {
 
 function creerVertexPlafond(objgl, fltLargeur, fltProfondeur, fltHauteur) {
     const tabVertex = [
-        0.0, fltHauteur, 0.0,
-        fltLargeur, fltHauteur, 0.0,
-        0.0, fltHauteur, fltProfondeur,
+        -fltLargeur, fltHauteur, -fltProfondeur,
+        fltLargeur, fltHauteur, -fltProfondeur,
+        -fltLargeur, fltHauteur, fltProfondeur,
         fltLargeur, fltHauteur, fltProfondeur
     ];
 
