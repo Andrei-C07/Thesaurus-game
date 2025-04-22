@@ -84,11 +84,8 @@ function creerMaillageMur(objgl) {
 }
 
 function estMur(x, z) {
+    //marge pour que le joueur ne puisse pas clip dans le mur
     const margin = 0.1;
-
-    if (x < 0 || z < 0 || z >= map.length || x >= map[0].length)
-        return true;
-
     const cell = map[Math.floor(z)][Math.floor(x)];
 
     return (

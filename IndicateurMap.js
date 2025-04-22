@@ -19,9 +19,9 @@ function creerObj3DIndicateur(objgl) {
 
 function creerVertexIndicateur(objgl) {
     const tabVertex = [
-        0.0, 0.0, 0.5,   // pointe
-       -0.3, 0.0, -0.3,  // gauche
-        0.3, 0.0, -0.3   // droite
+        0.0, 0.0, 5,   // pointe
+       -2, 0.0, -2,  // gauche
+        2, 0.0, -2   // droite
     ];
 
     const objVertex = objgl.createBuffer();
