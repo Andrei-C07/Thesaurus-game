@@ -6,8 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thesaurus</title>
 
-
-
     <script type="text/javascript" src="/FichiersWebGL/WebGL.js"></script>
     <script type="text/javascript" src="/FichiersWebGL/ShaderCouleursTextures.js"></script>
     <script type="text/javascript" src="/FichiersWebGL/glMatrix-0.9.5.min.js"></script>
@@ -60,8 +58,9 @@
 
    
             const obj3DSol = creerObj3DSol(objgl, TEX_SOL);
-            const obj3DPlafond = creerObj3DPlafond(objgl, TEX_CIEL, 40); //tu peut regler l'hauteur
+            const obj3DPlafond = creerObj3DPlafond(objgl, TEX_CIEL, 2.5); //tu peut regler l'hauteur
             tabObjets3D.push(obj3DPlafond);
+            objScene3D.plafond = obj3DPlafond;
             tabObjets3D.push(obj3DSol);
 
             //let totalMursNonOuvrables  = 0, totalMursOuvrables  = 0;
@@ -153,7 +152,7 @@
             // Matrice de projection
             const matProjection = mat4.create();
             const fltRapportCanevas = objgl.drawingBufferWidth / objgl.drawingBufferHeight;
-            mat4.perspective(45, fltRapportCanevas, 0.01, 1000, matProjection);
+            mat4.perspective(45, fltRapportCanevas, 0.01, 100, matProjection);
 
             // Relier la matrice aux shaders
             objgl.uniformMatrix4fv(objProgShaders.matProjection, false, matProjection);
@@ -277,25 +276,15 @@
                 setPositionsCameraXYZ([15.5, 40, 15.5], camera); // centrer et elever
                 setCiblesCameraXYZ([15.5, 0, 15.5], camera); // regarde vers le bas
                 setOrientationsXYZ([0, 0, -1], camera); // vers le sol
-                if (objScene3D.indicateur) {
-                    const pos = getPositionsCameraXYZ(camera);
-                    const cible = getCiblesCameraXYZ(camera);
-                    const dx = cible[0] - pos[0];
-                    const dz = cible[2] - pos[2];
-                    const angle = Math.atan2(dx, dz) * 180 / Math.PI;
 
-                    setPositionX(pos[0], objScene3D.indicateur.transformations);
-                    setPositionZ(pos[2], objScene3D.indicateur.transformations);
-                    setPositionY(35, objScene3D.indicateur.transformations);
-                    setAngleY(angle, objScene3D.indicateur.transformations);
-                }
-
+                ajusterHauteurPlafond(100);
                 effacerCanevas(objgl);
                 dessiner(objgl, objProgShaders, objScene3D);
                 return;
             }
             // Page Down -> Retour caméra joueur
             if (event.key === "2") {
+                ajusterHauteurPlafond(2.5);
                 if (cameraSauvPos && cameraSauvTarget && estEnVueMap) {
                     setPositionsCameraXYZ(cameraSauvPos, camera);
                     setCiblesCameraXYZ(cameraSauvTarget, camera);
@@ -341,20 +330,6 @@
                     setCibleCameraX(getCibleCameraX(camera) + dx * stepSize, camera);
                     setCibleCameraZ(getCibleCameraZ(camera) + dz * stepSize, camera);
                 }
-            }else if (event.keyCode == 51 || event.keyCode == 52) {
-                const direction = (event.keyCode == 51) ? -1 : 1; // 51 = 3 key, 52 = 4 key
-                const deltaY = direction * 0.1;
-
-                const pos = getPositionsCameraXYZ(camera);
-                const cible = getCiblesCameraXYZ(camera);
-
-                let newY = cible[1] + deltaY;
-                // Optional clamp to avoid flipping upside down
-                const maxPitch = 5.0;
-                const minPitch = -1.0;
-                newY = Math.max(minPitch, Math.min(maxPitch, newY));
-
-                setCibleCameraY(newY, camera);
             }
 
             effacerCanevas(objgl);
