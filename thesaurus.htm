@@ -17,6 +17,8 @@
     <script type="text/javascript" src="Mur.js"></script>
     <script type="text/javascript" src="IndicateurMap.js"></script>
     <script type="text/javascript" src="Sol.js"></script>
+    <script type="text/javascript" src="TeleTransporteur.js"></script>
+    <script type="text/javascript" src="TeleRecepteur.js"></script>
 
     <script type="text/javascript">
 
@@ -24,13 +26,15 @@
         let objProgShaders = null;
         let objScene3D = null;
 
-
-        const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png', '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png'];
+        //Change texture teleporter
+        const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png',
+            '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png', '/Textures/teleporter.jpg'];
         const TEX_TRANSPARENT = 0;
         const TEX_SOL = 1;
         const TEX_CIEL = 2;
         const TEX_MUR = 3;
         const TEX_MUR_OUVRABLE = 4
+        const TEX_TELETRANS = 5;
 
         let cameraSauvPos = null;
         let cameraSauvTarget = null;
@@ -55,15 +59,16 @@
 
 
             objScene3D.textures = await creerTextures(objgl, tabImages);
+            objScene3D.teleporteurs = [];
+            objScene3D.recepteurs = [];
 
-   
+
             const obj3DSol = creerObj3DSol(objgl, TEX_SOL);
-            const obj3DPlafond = creerObj3DPlafond(objgl, TEX_CIEL, 2.5); //tu peut regler l'hauteur
+            const obj3DPlafond = creerObj3DPlafond(objgl, TEX_CIEL, 2.3); //tu peut regler l'hauteur
             tabObjets3D.push(obj3DPlafond);
             objScene3D.plafond = obj3DPlafond;
             tabObjets3D.push(obj3DSol);
 
-            //let totalMursNonOuvrables  = 0, totalMursOuvrables  = 0;
             //Generation des murs ouvrables et non ouvrables
             for (let z = 0; z < map.length; z++) {
                 for (let x = 0; x < map[z].length; x++) {
@@ -75,7 +80,6 @@
                         setPositionZ(z, mur.transformations);
                         setPositionY(0, mur.transformations);
                         tabObjets3D.push(mur);
-                        //totalMursNonOuvrables++;
                     }
 
                     if (cellule === "w" || cellule === "d") {
@@ -84,16 +88,10 @@
                         setPositionZ(z, mur.transformations);
                         setPositionY(0, mur.transformations);
                         tabObjets3D.push(mur);
-                        //totalMursOuvrables++;
                     }
                 }
             }
-            //Debug
-            //console.log("Murs non ouvrables :", totalMursNonOuvrables);
-            //console.log("Murs ouvrables :", totalMursOuvrables);
-            //console.log("Total objets 3D générés :", tabObjets3D.length);
-
-
+            placerTeleporteursEtRecepteurs(objgl, objScene3D, TEX_TELETRANS, tabObjets3D);
             // Mettre les objets 3D sur la scène
             objScene3D.tabObjets3D = tabObjets3D;
 
@@ -115,7 +113,7 @@
             spawnZ += 0.5; // pour centrer la caméra sur le "A"
 
             // Positionner la caméra sur le "A"
-            setPositionsCameraXYZ([spawnX, 0.6 , spawnZ], camera); 
+            setPositionsCameraXYZ([spawnX, 0.6, spawnZ], camera);
             setCiblesCameraXYZ([spawnX, 0.6, spawnZ - 0.5], camera);
             posJoueur = [spawnX, 0.6, spawnZ];
             cibleJoueur = [spawnX, 0.6, spawnZ - 0.5];
@@ -126,8 +124,7 @@
             const indicateur = creerObj3DIndicateur(objgl);
             tabObjets3D.push(indicateur);
             objScene3D.indicateur = indicateur;
-            //setEchellesXYZ([1, 1, 1], objScene3D.transformations);
-            
+
             return objScene3D;
         }
         function dessiner(objgl, objProgShaders, objScene3D) {
@@ -136,17 +133,18 @@
             if (estEnVueMap && objScene3D.indicateur) {
                 const pos = posJoueurLive;
                 const cible = cibleJoueurLive;
+                console.log(pos);
                 const dx = cible[0] - pos[0];
                 const dz = cible[2] - pos[2];
                 const angle = Math.atan2(dx, dz) * 180 / Math.PI;
 
                 setPositionX(pos[0], objScene3D.indicateur.transformations);
                 setPositionZ(pos[2], objScene3D.indicateur.transformations);
-                setPositionY(1, objScene3D.indicateur.transformations); 
+                setPositionY(1, objScene3D.indicateur.transformations);
                 setAngleY(angle, objScene3D.indicateur.transformations);
-            }else{
+            } else {
                 //pour ne pas voir l'indicateur quand nous somme en vue premiere personne
-                setPositionY(-1, objScene3D.indicateur.transformations); 
+                setPositionY(-1, objScene3D.indicateur.transformations);
             }
 
             // Matrice de projection
@@ -331,10 +329,99 @@
                     setCibleCameraZ(getCibleCameraZ(camera) + dz * stepSize, camera);
                 }
             }
+            teleporterJoueurSiSurTeleporteur(objScene3D);
 
             effacerCanevas(objgl);
             dessiner(objgl, objProgShaders, objScene3D);
         }
+
+        function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObjets3D) {
+            objScene3D.teleporteurs = [];
+            objScene3D.recepteurs = [];
+
+            const cellulesDisponibles = [];
+
+            for (let z = 0; z < map.length; z++) {
+                for (let x = 0; x < map[z].length; x++) {
+                    const cellule = map[z][x];
+                    if (cellule === "g") {
+                        cellulesDisponibles.push({ x, z });
+                    }
+                }
+            }
+
+            // Mélange aléatoire
+            for (let i = cellulesDisponibles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cellulesDisponibles[i], cellulesDisponibles[j]] = [cellulesDisponibles[j], cellulesDisponibles[i]];
+            }
+
+            const nbTeleporteurs = 10;
+            const nbRecepteurs = 10;
+            let index = 0;
+
+            const positionsUtilisees = new Set();
+
+            // Placer les téléporteurs
+            for (let i = 0; i < nbTeleporteurs && index < cellulesDisponibles.length; i++) {
+                const { x, z } = cellulesDisponibles[index++];
+                const key = `${x},${z}`;
+                if (positionsUtilisees.has(key)) continue;
+
+                const objTele = creerObj3DTeleTransporteur(objgl, intNoTexture);
+                setPositionX(x + 0.5, objTele.transformations);
+                setPositionZ(z + 0.5, objTele.transformations);
+                setPositionY(0, objTele.transformations);
+                tabObjets3D.push(objTele);
+                objScene3D.teleporteurs.push({ x, z });
+                positionsUtilisees.add(key);
+            }
+
+            // Placer les récepteurs
+            for (let i = 0; i < nbRecepteurs && index < cellulesDisponibles.length; i++) {
+                const { x, z } = cellulesDisponibles[index++];
+                const key = `${x},${z}`;
+                if (positionsUtilisees.has(key)) continue;
+
+                const objRecepteur = creerObj3DTeleRecepteur(objgl, intNoTexture);
+                setPositionX(x + 0.5, objRecepteur.transformations);
+                setPositionZ(z + 0.5, objRecepteur.transformations);
+                setPositionY(0, objRecepteur.transformations);
+                tabObjets3D.push(objRecepteur);
+                objScene3D.recepteurs.push({ x, z });
+                positionsUtilisees.add(key);
+            }
+        }
+
+
+        function teleporterJoueurSiSurTeleporteur(objScene3D) {
+            const camera = objScene3D.camera;
+            const joueurX = Math.floor(getPositionCameraX(camera));
+            const joueurZ = Math.floor(getPositionCameraZ(camera));
+
+            for (let i = 0; i < objScene3D.teleporteurs.length; i++) {
+                const tp = objScene3D.teleporteurs[i];
+                if (Math.abs(joueurX + 0.5 - tp.x - 0.5) < 0.3 && Math.abs(joueurZ + 0.5 - tp.z - 0.5) < 0.3){
+                    if (objScene3D.recepteurs.length === 0) return;
+
+                    const r = objScene3D.recepteurs[Math.floor(Math.random() * objScene3D.recepteurs.length)];
+
+                    // Garder direction actuelle
+                    const dx = getCibleCameraX(camera) - getPositionCameraX(camera);
+                    const dz = getCibleCameraZ(camera) - getPositionCameraZ(camera);
+
+                    setPositionCameraX(r.x + 0.5, camera);
+                    setPositionCameraZ(r.z + 0.5, camera);
+                    setCibleCameraX(r.x + 0.5 + dx, camera);
+                    setCibleCameraZ(r.z + 0.5 + dz, camera);
+
+                    //Son de téléportation
+                    console.log("Téléportation");
+                }
+            }
+        }
+
+
     </script>
 </head>
 
