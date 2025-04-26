@@ -25,10 +25,12 @@
         let objgl = null;
         let objProgShaders = null;
         let objScene3D = null;
+        let score = 300;
+        let temps = 60;
 
         const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png',
             '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png'
-            ,'/Textures/beacon.png','/Textures/purpur_pillar_top.png'];
+            , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png'];
         const TEX_TRANSPARENT = 0;
         const TEX_SOL = 1;
         const TEX_CIEL = 2;
@@ -37,6 +39,9 @@
         const TEX_TELETRANS = 5;
         const TEX_TELERECP = 6;
 
+        let tempsRestant = null;
+        let penaliteVueAerienne = null;
+        let jeuTermine = false;
         let cameraSauvPos = null;
         let cameraSauvTarget = null;
         let estEnVueMap = false;
@@ -53,6 +58,7 @@
 
             effacerCanevas(objgl);
             dessiner(objgl, objProgShaders, objScene3D);
+            demarrerCompteARebours();
         }
         async function initScene3D(objgl) {
             const objScene3D = new Object();
@@ -128,6 +134,55 @@
 
             return objScene3D;
         }
+        function demarrerCompteARebours() {
+            if (tempsRestant === null) {
+                tempsRestant = setInterval(() => {
+                    if (temps > 0) {
+                        temps--;
+                        document.getElementById("temps").innerText = `Temps : ${temps}`;
+                    } else {
+                        clearInterval(tempsRestant);
+                        tempsRestant = null;
+                        jeuTermine = true;
+
+                        document.getElementById("messageGameOver").style.display = "block";
+                        document.getElementById("sonGameOver").play();
+
+                        retournerAuSpawn();
+                    }
+                }, 1000);
+            }
+        }
+        function demarrerPenaliteScoreVueAerienne() {
+            if (penaliteVueAerienne === null) {
+                penaliteVueAerienne = setInterval(() => {
+                    score = Math.max(0, score - 10);
+                    document.getElementById("score").innerText = `Score : ${score}`;
+
+                    if (score === 0) {
+                        clearInterval(penaliteVueAerienne);
+                        penaliteVueAerienne = null;
+                        ajusterHauteurPlafond(2.5);
+                        if (cameraSauvPos && cameraSauvTarget && estEnVueMap) {
+                            setPositionsCameraXYZ(cameraSauvPos, objScene3D.camera);
+                            setCiblesCameraXYZ(cameraSauvTarget, objScene3D.camera);
+                            setOrientationsXYZ([0, 1, 0], objScene3D.camera);
+                            estEnVueMap = false;
+                        }
+                        effacerCanevas(objgl);
+                        dessiner(objgl, objProgShaders, objScene3D);
+                    }
+                }, 1000);
+            }
+        }
+
+        function arreterPenaliteScoreVueAerienne() {
+            if (penaliteVueAerienne !== null) {
+                clearInterval(penaliteVueAerienne);
+                penaliteVueAerienne = null;
+            }
+        }
+
         function dessiner(objgl, objProgShaders, objScene3D) {
             // La vue
             objgl.viewport(0, 0, objgl.drawingBufferWidth, objgl.drawingBufferHeight);
@@ -256,7 +311,7 @@
 
         function deplacerCamera() {
             const camera = objScene3D.camera;
-
+            if (jeuTermine) return;
             let fltX;
             let fltZ;
             let intDirection;
@@ -267,6 +322,7 @@
             //On va changer les page up and page down apres quon finit tout
             //Page Up -> map view
             if (event.key === "1" && !estEnVueMap) {
+                demarrerPenaliteScoreVueAerienne();
                 cameraSauvPos = [...getPositionsCameraXYZ(camera)];
                 cameraSauvTarget = [...getCiblesCameraXYZ(camera)];
                 estEnVueMap = true;
@@ -283,6 +339,7 @@
             }
             // Page Down -> Retour caméra joueur
             if (event.key === "2") {
+                arreterPenaliteScoreVueAerienne();
                 ajusterHauteurPlafond(0);
                 if (cameraSauvPos && cameraSauvTarget && estEnVueMap) {
                     setPositionsCameraXYZ(cameraSauvPos, camera);
@@ -402,7 +459,7 @@
 
             for (let i = 0; i < objScene3D.teleporteurs.length; i++) {
                 const tp = objScene3D.teleporteurs[i];
-                if (Math.abs(joueurX + 0.5 - tp.x - 0.5) < 0.3 && Math.abs(joueurZ + 0.5 - tp.z - 0.5) < 0.3){
+                if (Math.abs(joueurX + 0.5 - tp.x - 0.5) < 0.3 && Math.abs(joueurZ + 0.5 - tp.z - 0.5) < 0.3) {
                     if (objScene3D.recepteurs.length === 0) return;
 
                     const r = objScene3D.recepteurs[Math.floor(Math.random() * objScene3D.recepteurs.length)];
@@ -430,6 +487,34 @@
     <canvas id="monCanvas" width="1920" height="1080" tabindex="1" onkeydown="deplacerCamera(); return false">
         Votre navigateur ne supporte pas la balise canvas
     </canvas>
+
+    <div id="infoJeu"
+        style="text-align: center; font-family: Arial, sans-serif; font-size: 20px; color: white; background-color: #333; padding: 10px; margin-top: 10px;">
+        <span id="niveau">Niveau : 1</span> |
+        <span id="ouvreurs">Ouvreurs : 4</span> |
+        <span id="score">Score : 300</span> |
+        <span id="temps">Temps : 60</span>
+    </div>
+
+    <!-- Ajoute aussi ça pour le son du Game Over -->
+    <audio id="sonGameOver" src="Sons/gameover.mp3" preload="auto"></audio>
+
+    <!-- Message Game Over caché au début -->
+    <div id="messageGameOver" style="display: none;
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     font-size: 60px;
+     color: red;
+     background: rgba(0,0,0,0.8);
+     padding: 30px;
+     border: 5px solid red;
+     border-radius: 15px;
+     font-family: Arial, sans-serif;
+     z-index: 999;">
+        GAME OVER
+    </div>
 </body>
 
 </html>
