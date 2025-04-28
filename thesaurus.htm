@@ -201,7 +201,56 @@
                 }, 1000);
             }
         }
+        function retournerAuSpawn() {
+            const camera = objScene3D.camera;
 
+            const positionActuelle = getPositionsCameraXYZ(camera);
+            const cibleActuelle = getCiblesCameraXYZ(camera);
+            const positionFinale = [...posJoueur];
+            const cibleFinale = [...cibleJoueur];
+
+            let progress = 0;
+            const duree = 2000;
+            const startTime = performance.now();
+
+            function animationRetour() {
+                const now = performance.now();
+                progress = Math.min((now - startTime) / duree, 1);
+
+                const interpolate = (start, end) => start + (end - start) * progress;
+
+                const hauteurVol = 3;
+
+                const yIntermediaire = positionFinale[1] + hauteurVol * (1 - Math.abs(0.5 - progress) * 2);
+
+                const nouvellePosition = [
+                    interpolate(positionActuelle[0], positionFinale[0]),
+                    yIntermediaire,
+                    interpolate(positionActuelle[2], positionFinale[2])
+                ];
+                const nouvelleCible = [
+                    interpolate(cibleActuelle[0], cibleFinale[0]),
+                    interpolate(cibleActuelle[1], cibleFinale[1]),
+                    interpolate(cibleActuelle[2], cibleFinale[2])
+                ];
+
+                setPositionsCameraXYZ(nouvellePosition, camera);
+                setCiblesCameraXYZ(nouvelleCible, camera);
+
+                effacerCanevas(objgl);
+                dessiner(objgl, objProgShaders, objScene3D);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animationRetour);
+                } else {
+                    // Repositionner exactement à la fin
+                    setPositionsCameraXYZ(positionFinale, camera);
+                    setCiblesCameraXYZ(cibleFinale, camera);
+                }
+            }
+
+            requestAnimationFrame(animationRetour);
+        }
         function arreterPenaliteScoreVueAerienne() {
             if (penaliteVueAerienne !== null) {
                 clearInterval(penaliteVueAerienne);
@@ -232,7 +281,26 @@
             // Matrice de projection
             const matProjection = mat4.create();
             const fltRapportCanevas = objgl.drawingBufferWidth / objgl.drawingBufferHeight;
-            mat4.perspective(45, fltRapportCanevas, 0.01, 100, matProjection);
+
+            if (estEnVueMap) {
+                // Projection orthographique (2D) pour la vue aérienne
+                // Les paramètres sont: left, right, bottom, top, near, far
+                const mapSize = 31; // Ajustez selon la taille de votre carte
+                const orthoScale = 1.0; // Ajustez pour zoomer/dézoomer
+
+                mat4.ortho(
+                    -mapSize / 2 * orthoScale * fltRapportCanevas,
+                    mapSize / 2 * orthoScale * fltRapportCanevas,
+                    -mapSize / 2 * orthoScale,
+                    mapSize / 2 * orthoScale,
+                    0.1,
+                    100,
+                    matProjection
+                );
+            } else {
+                // Projection perspective normale pour la vue à la première personne
+                mat4.perspective(45, fltRapportCanevas, 0.01, 100, matProjection);
+            }
 
             // Relier la matrice aux shaders
             objgl.uniformMatrix4fv(objProgShaders.matProjection, false, matProjection);
@@ -354,9 +422,17 @@
                 estEnVueMap = true;
                 posJoueurLive = getPositionsCameraXYZ(objScene3D.camera);
                 cibleJoueurLive = getCiblesCameraXYZ(objScene3D.camera);
-                setPositionsCameraXYZ([15.5, 40, 15.5], camera); // centrer et elever
-                setCiblesCameraXYZ([15.5, 0, 15.5], camera); // regarde vers le bas
-                setOrientationsXYZ([0, 0, -1], camera); // vers le sol
+                const mapCenterX = 15.5;  // Ajustez selon la taille de votre carte
+                const mapCenterZ = 15.5;  // Ajustez selon la taille de votre carte
+
+                // Positionnez la caméra juste au-dessus de la carte
+                setPositionsCameraXYZ([mapCenterX, 20, mapCenterZ], camera);
+
+                // La caméra regarde directement vers le bas (vue orthogonale parfaite)
+                setCiblesCameraXYZ([mapCenterX, 0, mapCenterZ], camera);
+
+                // L'orientation "up" doit être dans la direction -Z pour que la carte soit orientée correctement
+                setOrientationsXYZ([0, 0, -1], camera);
 
                 ajusterHauteurPlafond(100);
                 effacerCanevas(objgl);
@@ -420,6 +496,7 @@
 
                 if (joueurX === objScene3D.coffre.x && joueurZ === objScene3D.coffre.z) {
                     console.log("Trésor trouvé !");
+                    document.getElementById("sonNiveauReussi").play();
                     score += 10 * temps; // Bonus de points basé sur temps restant
                     document.getElementById("score").innerText = `Score : ${score}`;
 
@@ -514,7 +591,8 @@
                     setCibleCameraZ(r.z + 0.5 + dz, camera);
 
                     //Son de téléportation
-                    console.log("Téléportation");
+                    document.getElementById("sonTeleportation").play();
+
                 }
             }
         }
@@ -538,6 +616,9 @@
 
     <!-- Ajoute aussi ça pour le son du Game Over -->
     <audio id="sonGameOver" src="Sons/gameover.mp3" preload="auto"></audio>
+    <audio id="sonTeleportation" src="Sons/teleportation.mp3" preload="auto"></audio>
+    <audio id="sonDebutNiveau" src="Sons/debutNiveau.mp3" preload="auto"></audio>
+    <audio id="sonNiveauReussi" src="Sons/niveauReussi.mp3" preload="auto"></audio>
 
     <!-- Message Game Over caché au début -->
     <div id="messageGameOver" style="display: none;
