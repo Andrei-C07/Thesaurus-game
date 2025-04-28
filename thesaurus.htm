@@ -19,6 +19,7 @@
     <script type="text/javascript" src="Sol.js"></script>
     <script type="text/javascript" src="TeleTransporteur.js"></script>
     <script type="text/javascript" src="TeleRecepteur.js"></script>
+    <script type="text/javascript" src="Chest.js"></script>
 
     <script type="text/javascript">
 
@@ -30,7 +31,7 @@
 
         const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png',
             '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png'
-            , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png'];
+            , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png', '/Textures/diamond_ore.png'];
         const TEX_TRANSPARENT = 0;
         const TEX_SOL = 1;
         const TEX_CIEL = 2;
@@ -38,6 +39,7 @@
         const TEX_MUR_OUVRABLE = 4
         const TEX_TELETRANS = 5;
         const TEX_TELERECP = 6;
+        const TEX_CHEST = 7;
 
         let tempsRestant = null;
         let penaliteVueAerienne = null;
@@ -98,6 +100,30 @@
                     }
                 }
             }
+
+            const cellulesLibres = [];
+
+            for (let z = 0; z < map.length; z++) {
+                for (let x = 0; x < map[z].length; x++) {
+                    if (map[z][x] === "g") {
+                        cellulesLibres.push({ x, z });
+                    }
+                }
+            }
+            const randomIndex = Math.floor(Math.random() * cellulesLibres.length);
+            const cellule = cellulesLibres[randomIndex];
+
+            const coffre = creerObj3DChest(objgl, TEX_CHEST);
+            setPositionX(cellule.x + 0.5, coffre.transformations);
+            setPositionZ(cellule.z + 0.5, coffre.transformations);
+            setPositionY(0, coffre.transformations);
+            tabObjets3D.push(coffre);
+
+            objScene3D.coffre = { x: cellule.x, z: cellule.z, objet: coffre };
+
+            console.log("Coffre placé à", cellule.x, cellule.z);
+
+
             placerTeleporteursEtRecepteurs(objgl, objScene3D, TEX_TELETRANS, tabObjets3D);
             // Mettre les objets 3D sur la scène
             objScene3D.tabObjets3D = tabObjets3D;
@@ -387,6 +413,20 @@
                     setCibleCameraZ(getCibleCameraZ(camera) + dz * stepSize, camera);
                 }
             }
+
+            if (objScene3D.coffre) {
+                const joueurX = Math.floor(getPositionCameraX(objScene3D.camera));
+                const joueurZ = Math.floor(getPositionCameraZ(objScene3D.camera));
+
+                if (joueurX === objScene3D.coffre.x && joueurZ === objScene3D.coffre.z) {
+                    console.log("Trésor trouvé !");
+                    score += 10 * temps; // Bonus de points basé sur temps restant
+                    document.getElementById("score").innerText = `Score : ${score}`;
+
+                    // TODO : Passer au prochain niveau ici plus tard
+                }
+            }
+
             teleporterJoueurSiSurTeleporteur(objScene3D);
 
             effacerCanevas(objgl);
@@ -414,8 +454,8 @@
                 [cellulesDisponibles[i], cellulesDisponibles[j]] = [cellulesDisponibles[j], cellulesDisponibles[i]];
             }
 
-            const nbTeleporteurs = 10;
-            const nbRecepteurs = 10;
+            const nbTeleporteurs = 5;
+            const nbRecepteurs = 5;
             let index = 0;
 
             const positionsUtilisees = new Set();
