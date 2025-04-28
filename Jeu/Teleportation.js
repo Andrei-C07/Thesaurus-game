@@ -1,0 +1,57 @@
+function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObjets3D) {
+    objScene3D.teleporteurs = [];
+    objScene3D.recepteurs = [];
+
+    const cellulesDisponibles = [];
+
+    for (let z = 0; z < map.length; z++) {
+        for (let x = 0; x < map[z].length; x++) {
+            const cellule = map[z][x];
+            if (cellule === "g") {
+                cellulesDisponibles.push({ x, z });
+            }
+        }
+    }
+
+    // Mélange aléatoire
+    for (let i = cellulesDisponibles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cellulesDisponibles[i], cellulesDisponibles[j]] = [cellulesDisponibles[j], cellulesDisponibles[i]];
+    }
+
+    const nbTeleporteurs = 5;
+    const nbRecepteurs = 5;
+    let index = 0;
+
+    const positionsUtilisees = new Set();
+
+    // Placer les téléporteurs
+    for (let i = 0; i < nbTeleporteurs && index < cellulesDisponibles.length; i++) {
+        const { x, z } = cellulesDisponibles[index++];
+        const key = `${x},${z}`;
+        if (positionsUtilisees.has(key)) continue;
+
+        const objTele = creerObj3DTeleTransporteur(objgl, TEX_TELETRANS);
+        setPositionX(x + 0.5, objTele.transformations);
+        setPositionZ(z + 0.5, objTele.transformations);
+        setPositionY(0, objTele.transformations);
+        tabObjets3D.push(objTele);
+        objScene3D.teleporteurs.push({ x, z });
+        positionsUtilisees.add(key);
+    }
+
+    // Placer les récepteurs
+    for (let i = 0; i < nbRecepteurs && index < cellulesDisponibles.length; i++) {
+        const { x, z } = cellulesDisponibles[index++];
+        const key = `${x},${z}`;
+        if (positionsUtilisees.has(key)) continue;
+
+        const objRecepteur = creerObj3DTeleRecepteur(objgl, TEX_TELERECP);
+        setPositionX(x + 0.5, objRecepteur.transformations);
+        setPositionZ(z + 0.5, objRecepteur.transformations);
+        setPositionY(0, objRecepteur.transformations);
+        tabObjets3D.push(objRecepteur);
+        objScene3D.recepteurs.push({ x, z });
+        positionsUtilisees.add(key);
+    }
+}
