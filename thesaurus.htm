@@ -114,8 +114,8 @@
             const cellule = cellulesLibres[randomIndex];
 
             const coffre = creerObj3DChest(objgl, TEX_CHEST);
-            setPositionX(cellule.x + 0.5, coffre.transformations);
-            setPositionZ(cellule.z + 0.5, coffre.transformations);
+            setPositionX(cellule.x + 0.25, coffre.transformations);
+            setPositionZ(cellule.z + 0.25, coffre.transformations);
             setPositionY(0, coffre.transformations);
             tabObjets3D.push(coffre);
 

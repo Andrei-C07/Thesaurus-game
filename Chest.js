@@ -1,8 +1,8 @@
 function creerObj3DChest(objgl, intNoTexture) {
     const objChest = new Object();
-    const largeur = 1;
+    const largeur = 0.5;
     const hauteur = 0.5;
-    const profondeur = 1;
+    const profondeur = 0.5;
 
     const tabVertex = [
         // Devant
