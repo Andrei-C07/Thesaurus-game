@@ -4,24 +4,20 @@ function creerObj3DChest(objgl, intNoTexture) {
     const hauteur = 0.5;
     const profondeur = 0.5;
 
-    const demiLargeur = largeur / 2;
-    const demiProfondeur = profondeur / 2;
-
     const tabVertex = [
         // Devant
-        -demiLargeur, 0, demiProfondeur,  demiLargeur, 0, demiProfondeur,  -demiLargeur, hauteur, demiProfondeur,  demiLargeur, hauteur, demiProfondeur,
+        0, 0, profondeur,  largeur, 0, profondeur,  0, hauteur, profondeur,  largeur, hauteur, profondeur,
         // Derrière
-        demiLargeur, 0, -demiProfondeur,  -demiLargeur, 0, -demiProfondeur,  demiLargeur, hauteur, -demiProfondeur,  -demiLargeur, hauteur, -demiProfondeur,
+        largeur, 0, 0,  0, 0, 0,  largeur, hauteur, 0,  0, hauteur, 0,
         // Gauche
-        -demiLargeur, 0, -demiProfondeur,  -demiLargeur, 0, demiProfondeur,  -demiLargeur, hauteur, -demiProfondeur,  -demiLargeur, hauteur, demiProfondeur,
+        0, 0, 0,  0, 0, profondeur,  0, hauteur, 0,  0, hauteur, profondeur,
         // Droite
-        demiLargeur, 0, demiProfondeur,  demiLargeur, 0, -demiProfondeur,  demiLargeur, hauteur, demiProfondeur,  demiLargeur, hauteur, -demiProfondeur,
+        largeur, 0, profondeur,  largeur, 0, 0,  largeur, hauteur, profondeur,  largeur, hauteur, 0,
         // Haut
-        -demiLargeur, hauteur, demiProfondeur,  demiLargeur, hauteur, demiProfondeur,  -demiLargeur, hauteur, -demiProfondeur,  demiLargeur, hauteur, -demiProfondeur,
+        0, hauteur, profondeur,  largeur, hauteur, profondeur,  0, hauteur, 0,  largeur, hauteur, 0,
         // Bas
-        -demiLargeur, 0, -demiProfondeur,  demiLargeur, 0, -demiProfondeur,  -demiLargeur, 0, demiProfondeur,  demiLargeur, 0, demiProfondeur,
+        0, 0, 0,  largeur, 0, 0,  0, 0, profondeur,  largeur, 0, profondeur,
     ];
-    
 
     const tabTexels = [];
     for (let i = 0; i < 6; i++) {
