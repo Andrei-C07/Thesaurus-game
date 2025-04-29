@@ -121,10 +121,12 @@ function deplacerCamera() {
         if (joueurX === objScene3D.coffre.x && joueurZ === objScene3D.coffre.z) {
             console.log("Trésor trouvé !");
             document.getElementById("sonNiveauReussi").play();
-            score += 10 * temps; // Bonus de points basé sur temps restant
+            score += 10 * temps;
             document.getElementById("score").innerText = `Score : ${score}`;
-
-            // TODO : Passer au prochain niveau ici plus tard
+        
+            setTimeout(() => {
+                niveauSuivant(objgl, objProgShaders);
+            }, 1000); 
         }
     }
     if (event.code === "Space") {

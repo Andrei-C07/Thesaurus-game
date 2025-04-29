@@ -35,8 +35,9 @@
         let objProgShaders = null;
         let objScene3D = null;
         let score = 300;
-        let temps = 60;
-
+        //VARIABLE GLOBALE POUR LE TEMPS
+        const DUREE_NIVEAU = 60;
+        
         const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png',
             '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png'
             , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png', '/Textures/diamond_ore.png', '/Textures/fleche.jpg'];
@@ -61,6 +62,7 @@
         let posJoueurLive = null;
         let cibleJoueurLive = null;
         let nbOuvreurs = 4;
+        let temps = DUREE_NIVEAU;
 
         async function demarrer() {
             const objCanvas = document.getElementById('monCanvas');
@@ -151,26 +153,30 @@
                 if (map[spawnZ][spawnX] === "A") break;
             }
 
-            spawnX += 0.5; 
-            spawnZ += 0.5; 
+            spawnX += 0.5;
+            spawnZ += 0.5;
 
             setPositionsCameraXYZ([spawnX, 0.6, spawnZ], camera);
             setCiblesCameraXYZ([spawnX, 0.6, spawnZ - 0.5], camera);
             posJoueur = [spawnX, 0.6, spawnZ];
             cibleJoueur = [spawnX, 0.6, spawnZ - 0.5];
             function placerFlechesVersTresor(objgl, objScene3D, intNoTexture, tabObjets3D) {
-
                 const cellulesLibres = [];
 
                 for (let z = 0; z < map.length; z++) {
                     for (let x = 0; x < map[z].length; x++) {
                         if (map[z][x] === "g") {
-                            cellulesLibres.push({ x, z });
+                            // Ne pas prendre la cellule du coffre
+                            if (x !== objScene3D.coffre.x || z !== objScene3D.coffre.z) {
+                                cellulesLibres.push({ x, z });
+                            }
                         }
                     }
                 }
 
-                const nbFleches = 18;
+                let nbFleches = 18 - (niveau - 1) * 2;
+                nbFleches = Math.max(nbFleches, 0); // Pas négatif
+
                 const positionsUtilisees = new Set();
 
                 for (let i = 0; i < nbFleches && cellulesLibres.length > 0; i++) {
@@ -185,7 +191,7 @@
                     setPositionZ(z + 0.5, objFleche.transformations);
                     setPositionY(1.7, objFleche.transformations);
 
-                    // Calculer l'angle vers le trésor
+                    // Calcul angle vers le trésor
                     const coffreX = objScene3D.coffre.x + 0.5;
                     const coffreZ = objScene3D.coffre.z + 0.5;
                     const dx = coffreX - (x + 0.5);
@@ -195,12 +201,11 @@
 
                     setAngleY(angleDeg, objFleche.transformations);
 
-                    // Ajouter à la scène
                     tabObjets3D.push(objFleche);
-
                     positionsUtilisees.add(key);
                 }
             }
+
 
             setOrientationsXYZ([0, 1, 0], camera);
             objScene3D.camera = camera;
@@ -211,7 +216,7 @@
 
             return objScene3D;
         }
-        
+
 
         function dessiner(objgl, objProgShaders, objScene3D) {
             // La vue
@@ -240,7 +245,7 @@
             if (estEnVueMap) {
                 // Projection orthographique (2D) pour la vue aérienne
                 const mapSize = 31;
-                const orthoScale = 1.0; 
+                const orthoScale = 1.0;
 
                 mat4.ortho(
                     -mapSize / 2 * orthoScale * fltRapportCanevas,
@@ -266,7 +271,7 @@
                 const texels = objScene3D.tabObjets3D[i].texels;
                 const maillage = objScene3D.tabObjets3D[i].maillage;
                 const transformations = objScene3D.tabObjets3D[i].transformations;
-          
+
                 const matModeleVue = mat4.create();
                 mat4.identity(matModeleVue);
 
