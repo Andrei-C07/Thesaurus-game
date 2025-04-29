@@ -12,26 +12,35 @@
     <script type="text/javascript" src="/FichiersWebGL/Transformations.js"></script>
     <script type="text/javascript" src="/FichiersWebGL/Camera.js"></script>
     <script type="text/javascript" src="/FichiersWebGL/Textures.js"></script>
-    <script type="text/javascript" src="Map.js"></script>
-    <script type="text/javascript" src="Plafond.js"></script>
-    <script type="text/javascript" src="Mur.js"></script>
-    <script type="text/javascript" src="IndicateurMap.js"></script>
-    <script type="text/javascript" src="Sol.js"></script>
-    <script type="text/javascript" src="TeleTransporteur.js"></script>
-    <script type="text/javascript" src="TeleRecepteur.js"></script>
-    <script type="text/javascript" src="Chest.js"></script>
 
+
+    <script type="text/javascript" src="/Objets/Plafond.js"></script>
+    <script type="text/javascript" src="/Objets/Mur.js"></script>
+    <script type="text/javascript" src="/Objets/IndicateurMap.js"></script>
+    <script type="text/javascript" src="/Objets/Sol.js"></script>
+    <script type="text/javascript" src="/Objets/TeleTransporteur.js"></script>
+    <script type="text/javascript" src="/Objets/TeleRecepteur.js"></script>
+    <script type="text/javascript" src="/Objets/Chest.js"></script>
+    <script type="text/javascript" src="/Objets/fleche.js"></script>
+
+    <script type="text/javascript" src="/Jeu/Deplacement.js"></script>
+    <script type="text/javascript" src="/Jeu/Score.js"></script>
+    <script type="text/javascript" src="/Jeu/Niveau.js"></script>
+    <script type="text/javascript" src="/Jeu/Teleportation.js"></script>
+
+    <script type="text/javascript" src="/map.js"></script>
     <script type="text/javascript">
 
         let objgl = null;
         let objProgShaders = null;
         let objScene3D = null;
         let score = 300;
-        let temps = 60;
-
+        //VARIABLE GLOBALE POUR LE TEMPS
+        const DUREE_NIVEAU = 60;
+        
         const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png',
             '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png'
-            , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png', '/Textures/diamond_ore.png'];
+            , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png', '/Textures/diamond_ore.png', '/Textures/fleche.jpg'];
         const TEX_TRANSPARENT = 0;
         const TEX_SOL = 1;
         const TEX_CIEL = 2;
@@ -40,6 +49,7 @@
         const TEX_TELETRANS = 5;
         const TEX_TELERECP = 6;
         const TEX_CHEST = 7;
+        const TEX_FLECHE = 8;
 
         let tempsRestant = null;
         let penaliteVueAerienne = null;
@@ -51,6 +61,8 @@
         let cibleJoueur = null;
         let posJoueurLive = null;
         let cibleJoueurLive = null;
+        let nbOuvreurs = 4;
+        let temps = DUREE_NIVEAU;
 
         async function demarrer() {
             const objCanvas = document.getElementById('monCanvas');
@@ -120,12 +132,11 @@
             tabObjets3D.push(coffre);
 
             objScene3D.coffre = { x: cellule.x, z: cellule.z, objet: coffre };
-
-            console.log("Coffre placé à", cellule.x, cellule.z);
-
+            //console.log("Coffre placé à", cellule.x, cellule.z);
 
             placerTeleporteursEtRecepteurs(objgl, objScene3D, TEX_TELETRANS, tabObjets3D);
-            // Mettre les objets 3D sur la scène
+            placerFlechesVersTresor(objgl, objScene3D, TEX_FLECHE, tabObjets3D);
+
             objScene3D.tabObjets3D = tabObjets3D;
 
             // La caméra
@@ -142,14 +153,59 @@
                 if (map[spawnZ][spawnX] === "A") break;
             }
 
-            spawnX += 0.5; // pour centrer la caméra sur le "A"
-            spawnZ += 0.5; // pour centrer la caméra sur le "A"
+            spawnX += 0.5;
+            spawnZ += 0.5;
 
-            // Positionner la caméra sur le "A"
             setPositionsCameraXYZ([spawnX, 0.6, spawnZ], camera);
             setCiblesCameraXYZ([spawnX, 0.6, spawnZ - 0.5], camera);
             posJoueur = [spawnX, 0.6, spawnZ];
             cibleJoueur = [spawnX, 0.6, spawnZ - 0.5];
+            function placerFlechesVersTresor(objgl, objScene3D, intNoTexture, tabObjets3D) {
+                const cellulesLibres = [];
+
+                for (let z = 0; z < map.length; z++) {
+                    for (let x = 0; x < map[z].length; x++) {
+                        if (map[z][x] === "g") {
+                            // Ne pas prendre la cellule du coffre
+                            if (x !== objScene3D.coffre.x || z !== objScene3D.coffre.z) {
+                                cellulesLibres.push({ x, z });
+                            }
+                        }
+                    }
+                }
+
+                let nbFleches = 18 - (niveau - 1) * 2;
+                nbFleches = Math.max(nbFleches, 0); // Pas négatif
+
+                const positionsUtilisees = new Set();
+
+                for (let i = 0; i < nbFleches && cellulesLibres.length > 0; i++) {
+                    const index = Math.floor(Math.random() * cellulesLibres.length);
+                    const { x, z } = cellulesLibres.splice(index, 1)[0];
+                    const key = `${x},${z}`;
+                    if (positionsUtilisees.has(key)) continue;
+
+                    const objFleche = creerObj3DFleche(objgl, intNoTexture);
+
+                    setPositionX(x + 0.5, objFleche.transformations);
+                    setPositionZ(z + 0.5, objFleche.transformations);
+                    setPositionY(1.7, objFleche.transformations);
+
+                    // Calcul angle vers le trésor
+                    const coffreX = objScene3D.coffre.x + 0.5;
+                    const coffreZ = objScene3D.coffre.z + 0.5;
+                    const dx = coffreX - (x + 0.5);
+                    const dz = coffreZ - (z + 0.5);
+                    const angleRad = Math.atan2(dx, dz);
+                    const angleDeg = angleRad * 180 / Math.PI;
+
+                    setAngleY(angleDeg, objFleche.transformations);
+
+                    tabObjets3D.push(objFleche);
+                    positionsUtilisees.add(key);
+                }
+            }
+
 
             setOrientationsXYZ([0, 1, 0], camera);
             objScene3D.camera = camera;
@@ -160,54 +216,7 @@
 
             return objScene3D;
         }
-        function demarrerCompteARebours() {
-            if (tempsRestant === null) {
-                tempsRestant = setInterval(() => {
-                    if (temps > 0) {
-                        temps--;
-                        document.getElementById("temps").innerText = `Temps : ${temps}`;
-                    } else {
-                        clearInterval(tempsRestant);
-                        tempsRestant = null;
-                        jeuTermine = true;
 
-                        document.getElementById("messageGameOver").style.display = "block";
-                        document.getElementById("sonGameOver").play();
-
-                        retournerAuSpawn();
-                    }
-                }, 1000);
-            }
-        }
-        function demarrerPenaliteScoreVueAerienne() {
-            if (penaliteVueAerienne === null) {
-                penaliteVueAerienne = setInterval(() => {
-                    score = Math.max(0, score - 10);
-                    document.getElementById("score").innerText = `Score : ${score}`;
-
-                    if (score === 0) {
-                        clearInterval(penaliteVueAerienne);
-                        penaliteVueAerienne = null;
-                        ajusterHauteurPlafond(2.5);
-                        if (cameraSauvPos && cameraSauvTarget && estEnVueMap) {
-                            setPositionsCameraXYZ(cameraSauvPos, objScene3D.camera);
-                            setCiblesCameraXYZ(cameraSauvTarget, objScene3D.camera);
-                            setOrientationsXYZ([0, 1, 0], objScene3D.camera);
-                            estEnVueMap = false;
-                        }
-                        effacerCanevas(objgl);
-                        dessiner(objgl, objProgShaders, objScene3D);
-                    }
-                }, 1000);
-            }
-        }
-
-        function arreterPenaliteScoreVueAerienne() {
-            if (penaliteVueAerienne !== null) {
-                clearInterval(penaliteVueAerienne);
-                penaliteVueAerienne = null;
-            }
-        }
 
         function dessiner(objgl, objProgShaders, objScene3D) {
             // La vue
@@ -232,13 +241,30 @@
             // Matrice de projection
             const matProjection = mat4.create();
             const fltRapportCanevas = objgl.drawingBufferWidth / objgl.drawingBufferHeight;
-            mat4.perspective(45, fltRapportCanevas, 0.01, 100, matProjection);
+
+            if (estEnVueMap) {
+                // Projection orthographique (2D) pour la vue aérienne
+                const mapSize = 31;
+                const orthoScale = 1.0;
+
+                mat4.ortho(
+                    -mapSize / 2 * orthoScale * fltRapportCanevas,
+                    mapSize / 2 * orthoScale * fltRapportCanevas,
+                    -mapSize / 2 * orthoScale,
+                    mapSize / 2 * orthoScale,
+                    0.1,
+                    100,
+                    matProjection
+                );
+            } else {
+                // Projection perspective normale pour la vue à la première personne
+                mat4.perspective(45, fltRapportCanevas, 0.01, 100, matProjection);
+            }
 
             // Relier la matrice aux shaders
             objgl.uniformMatrix4fv(objProgShaders.matProjection, false, matProjection);
 
             for (let i = 0; i < objScene3D.tabObjets3D.length; i++) {
-                //if (objScene3D.tabObjets3D[i].estIndicateur && !estEnVueMap) continue;
 
                 const vertex = objScene3D.tabObjets3D[i].vertex;
                 const couleurs = objScene3D.tabObjets3D[i].couleurs;
@@ -246,24 +272,20 @@
                 const maillage = objScene3D.tabObjets3D[i].maillage;
                 const transformations = objScene3D.tabObjets3D[i].transformations;
 
-                // Matrice du modèle            
                 const matModeleVue = mat4.create();
                 mat4.identity(matModeleVue);
 
-                // Placer la caméra sur la scène
                 mat4.lookAt(getPositionsCameraXYZ(objScene3D.camera),
                     getCiblesCameraXYZ(objScene3D.camera),
                     getOrientationsXYZ(objScene3D.camera),
                     matModeleVue);
 
-                // Appliquer les transformations sur le modèle 
                 mat4.translate(matModeleVue, getPositionsXYZ(transformations));
                 mat4.scale(matModeleVue, getEchellesXYZ(transformations));
                 mat4.rotateX(matModeleVue, getAngleX(transformations) * Math.PI / 180);
                 mat4.rotateY(matModeleVue, getAngleY(transformations) * Math.PI / 180);
                 mat4.rotateZ(matModeleVue, getAngleZ(transformations) * Math.PI / 180);
 
-                // Relier la matrice aux shaders
                 objgl.uniformMatrix4fv(objProgShaders.matModeleVue, false, matModeleVue);
 
                 if (maillage == null)
@@ -334,192 +356,6 @@
             objgl.clear(objgl.COLOR_BUFFER_BIT | objgl.DEPTH_BUFFER_BIT);
         }
 
-
-        function deplacerCamera() {
-            const camera = objScene3D.camera;
-            if (jeuTermine) return;
-            let fltX;
-            let fltZ;
-            let intDirection;
-            let fltAngle;
-            let fltXPrime;
-            let fltZPrime;
-            let fltRayon;
-            //On va changer les page up and page down apres quon finit tout
-            //Page Up -> map view
-            if (event.key === "1" && !estEnVueMap) {
-                demarrerPenaliteScoreVueAerienne();
-                cameraSauvPos = [...getPositionsCameraXYZ(camera)];
-                cameraSauvTarget = [...getCiblesCameraXYZ(camera)];
-                estEnVueMap = true;
-                posJoueurLive = getPositionsCameraXYZ(objScene3D.camera);
-                cibleJoueurLive = getCiblesCameraXYZ(objScene3D.camera);
-                setPositionsCameraXYZ([15.5, 40, 15.5], camera); // centrer et elever
-                setCiblesCameraXYZ([15.5, 0, 15.5], camera); // regarde vers le bas
-                setOrientationsXYZ([0, 0, -1], camera); // vers le sol
-
-                ajusterHauteurPlafond(100);
-                effacerCanevas(objgl);
-                dessiner(objgl, objProgShaders, objScene3D);
-                return;
-            }
-            // Page Down -> Retour caméra joueur
-            if (event.key === "2") {
-                arreterPenaliteScoreVueAerienne();
-                ajusterHauteurPlafond(0);
-                if (cameraSauvPos && cameraSauvTarget && estEnVueMap) {
-                    setPositionsCameraXYZ(cameraSauvPos, camera);
-                    setCiblesCameraXYZ(cameraSauvTarget, camera);
-                    setOrientationsXYZ([0, 1, 0], camera);
-                    estEnVueMap = false;
-                }
-
-                effacerCanevas(objgl);
-                dessiner(objgl, objProgShaders, objScene3D);
-                return;
-            }
-            if (event.keyCode == 37 || event.keyCode == 39) {
-                // 37:  Flèche-à-gauche; 39:Flèche-à-droite
-                fltX = getCibleCameraX(camera) - getPositionCameraX(camera);
-                fltZ = getCibleCameraZ(camera) - getPositionCameraZ(camera);
-                intDirection = (event.keyCode == 37) ? -1 : 1;
-                fltAngle = intDirection * Math.PI / 90; // Tourner 2 degrés
-                fltXPrime = fltX * Math.cos(fltAngle) - fltZ * Math.sin(fltAngle);
-                fltZPrime = fltX * Math.sin(fltAngle) + fltZ * Math.cos(fltAngle);
-                setCibleCameraX(getPositionCameraX(camera) + fltXPrime, camera);
-                setCibleCameraZ(getPositionCameraZ(camera) + fltZPrime, camera);
-            }
-            else if (event.keyCode == 38 || event.keyCode == 40) {
-                const direction = (event.keyCode == 38) ? 1 : -1;
-
-                let dx = getCibleCameraX(camera) - getPositionCameraX(camera);
-                let dz = getCibleCameraZ(camera) - getPositionCameraZ(camera);
-                const distance = Math.sqrt(dx * dx + dz * dz);
-
-                dx /= distance;
-                dz /= distance;
-
-                const stepSize = 0.2 * direction;
-
-                const newX = getPositionCameraX(camera) + dx * stepSize;
-                const newZ = getPositionCameraZ(camera) + dz * stepSize;
-
-                // Vérifier si le nouveau point est un mur
-                // Si ce n'est pas un mur, mettre à jour la position de la caméra
-                if (!estMur(newX, newZ)) {
-                    setPositionCameraX(newX, camera);
-                    setPositionCameraZ(newZ, camera);
-                    setCibleCameraX(getCibleCameraX(camera) + dx * stepSize, camera);
-                    setCibleCameraZ(getCibleCameraZ(camera) + dz * stepSize, camera);
-                }
-            }
-
-            if (objScene3D.coffre) {
-                const joueurX = Math.floor(getPositionCameraX(objScene3D.camera));
-                const joueurZ = Math.floor(getPositionCameraZ(objScene3D.camera));
-
-                if (joueurX === objScene3D.coffre.x && joueurZ === objScene3D.coffre.z) {
-                    console.log("Trésor trouvé !");
-                    score += 10 * temps; // Bonus de points basé sur temps restant
-                    document.getElementById("score").innerText = `Score : ${score}`;
-
-                    // TODO : Passer au prochain niveau ici plus tard
-                }
-            }
-
-            teleporterJoueurSiSurTeleporteur(objScene3D);
-
-            effacerCanevas(objgl);
-            dessiner(objgl, objProgShaders, objScene3D);
-        }
-
-        function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObjets3D) {
-            objScene3D.teleporteurs = [];
-            objScene3D.recepteurs = [];
-
-            const cellulesDisponibles = [];
-
-            for (let z = 0; z < map.length; z++) {
-                for (let x = 0; x < map[z].length; x++) {
-                    const cellule = map[z][x];
-                    if (cellule === "g") {
-                        cellulesDisponibles.push({ x, z });
-                    }
-                }
-            }
-
-            // Mélange aléatoire
-            for (let i = cellulesDisponibles.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [cellulesDisponibles[i], cellulesDisponibles[j]] = [cellulesDisponibles[j], cellulesDisponibles[i]];
-            }
-
-            const nbTeleporteurs = 5;
-            const nbRecepteurs = 5;
-            let index = 0;
-
-            const positionsUtilisees = new Set();
-
-            // Placer les téléporteurs
-            for (let i = 0; i < nbTeleporteurs && index < cellulesDisponibles.length; i++) {
-                const { x, z } = cellulesDisponibles[index++];
-                const key = `${x},${z}`;
-                if (positionsUtilisees.has(key)) continue;
-
-                const objTele = creerObj3DTeleTransporteur(objgl, TEX_TELETRANS);
-                setPositionX(x + 0.5, objTele.transformations);
-                setPositionZ(z + 0.5, objTele.transformations);
-                setPositionY(0, objTele.transformations);
-                tabObjets3D.push(objTele);
-                objScene3D.teleporteurs.push({ x, z });
-                positionsUtilisees.add(key);
-            }
-
-            // Placer les récepteurs
-            for (let i = 0; i < nbRecepteurs && index < cellulesDisponibles.length; i++) {
-                const { x, z } = cellulesDisponibles[index++];
-                const key = `${x},${z}`;
-                if (positionsUtilisees.has(key)) continue;
-
-                const objRecepteur = creerObj3DTeleRecepteur(objgl, TEX_TELERECP);
-                setPositionX(x + 0.5, objRecepteur.transformations);
-                setPositionZ(z + 0.5, objRecepteur.transformations);
-                setPositionY(0, objRecepteur.transformations);
-                tabObjets3D.push(objRecepteur);
-                objScene3D.recepteurs.push({ x, z });
-                positionsUtilisees.add(key);
-            }
-        }
-
-
-        function teleporterJoueurSiSurTeleporteur(objScene3D) {
-            const camera = objScene3D.camera;
-            const joueurX = Math.floor(getPositionCameraX(camera));
-            const joueurZ = Math.floor(getPositionCameraZ(camera));
-
-            for (let i = 0; i < objScene3D.teleporteurs.length; i++) {
-                const tp = objScene3D.teleporteurs[i];
-                if (Math.abs(joueurX + 0.5 - tp.x - 0.5) < 0.3 && Math.abs(joueurZ + 0.5 - tp.z - 0.5) < 0.3) {
-                    if (objScene3D.recepteurs.length === 0) return;
-
-                    const r = objScene3D.recepteurs[Math.floor(Math.random() * objScene3D.recepteurs.length)];
-
-                    // Garder direction actuelle
-                    const dx = getCibleCameraX(camera) - getPositionCameraX(camera);
-                    const dz = getCibleCameraZ(camera) - getPositionCameraZ(camera);
-
-                    setPositionCameraX(r.x + 0.5, camera);
-                    setPositionCameraZ(r.z + 0.5, camera);
-                    setCibleCameraX(r.x + 0.5 + dx, camera);
-                    setCibleCameraZ(r.z + 0.5 + dz, camera);
-
-                    //Son de téléportation
-                    console.log("Téléportation");
-                }
-            }
-        }
-
-
     </script>
 </head>
 
@@ -536,10 +372,11 @@
         <span id="temps">Temps : 60</span>
     </div>
 
-    <!-- Ajoute aussi ça pour le son du Game Over -->
     <audio id="sonGameOver" src="Sons/gameover.mp3" preload="auto"></audio>
+    <audio id="sonTeleportation" src="Sons/teleportation.mp3" preload="auto"></audio>
+    <audio id="sonDebutNiveau" src="Sons/debutNiveau.mp3" preload="auto"></audio>
+    <audio id="sonNiveauReussi" src="Sons/niveauReussi.mp3" preload="auto"></audio>
 
-    <!-- Message Game Over caché au début -->
     <div id="messageGameOver" style="display: none;
      position: absolute;
      top: 50%;
