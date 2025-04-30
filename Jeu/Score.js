@@ -39,6 +39,7 @@ function demarrerPenaliteScoreVueAerienne() {
         }, 1000);
     }
 }
+
 function retournerAuSpawn() {
     const camera = objScene3D.camera;
 

@@ -445,38 +445,74 @@
 </head>
 
 <body onload="demarrer()">
-    <canvas id="monCanvas" width="1920" height="1080" tabindex="1" onkeydown="deplacerCamera(); return false">
-        Votre navigateur ne supporte pas la balise canvas
-    </canvas>
+    <div id="gameWrapper" style="position: relative; width: 1920px; height: 1080px; margin: auto;">
+        <canvas id="monCanvas" width="1920" height="1080" tabindex="1" onkeydown="deplacerCamera(); return false"
+            style="display: block;">
+            Votre navigateur ne supporte pas la balise canvas
+        </canvas>
 
-    <div id="infoJeu"
-        style="text-align: center; font-family: Arial, sans-serif; font-size: 20px; color: white; background-color: #333; padding: 10px; margin-top: 10px;">
-        <span id="niveau">Niveau : 1</span> |
-        <span id="ouvreurs">Ouvreurs : 4</span> |
-        <span id="score">Score : 300</span> |
-        <span id="temps">Temps : 60</span>
+        <div id="messageGameOver" style="display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 250px;
+    white-space: nowrap;
+    color: darkred;
+    padding: 30px;
+    font-family: 'Press Start 2P', fantasy;
+    z-index: 999;">
+        GAME OVER
+    </div>
+
+    <div id="messageNiveauReussi" style="display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 60px;
+    color: gold;
+    background: rgba(0,0,0,0.8);
+    padding: 30px;
+    border: 5px solid gold;
+    border-radius: 15px;
+    font-family: Arial, sans-serif;
+    z-index: 999;">
+        NIVEAU RÉUSSI
+    </div>
+
+    <div id="messageJeuReussi" style="display: none;
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   font-size: 60px;
+   color: #33ff3f;
+   background: rgba(0,0,0,0.8);
+   padding: 30px;
+   border: 5px solid #33ff3f;
+   border-radius: 15px;
+   font-family: Arial, sans-serif;
+   z-index: 999;">
+        FÉLICITATIONS!!! <br>
+        VOUS AVEZ GAGNÉ!!!
+    </div>
+
+        <div id="infoJeu"
+        style="text-align: center; font-family: fantasy; font-size: 20px; color: white; padding: 10px; margin-top: 10px; position: absolute; bottom: 10px; left: 50%; text-align: center; transform: translateX(-50%); z-index: 1000;">
+            <span id="niveau">Niveau : 1</span> |
+            <span id="ouvreurs">Ouvreurs : 4</span> |
+            <span id="score">Score : 300</span> |
+            <span id="temps">Temps : 60</span>
+        </div>
     </div>
 
     <audio id="sonGameOver" src="Sons/gameover.mp3" preload="auto"></audio>
     <audio id="sonTeleportation" src="Sons/teleportation.mp3" preload="auto"></audio>
     <audio id="sonDebutNiveau" src="Sons/debutNiveau.mp3" preload="auto"></audio>
     <audio id="sonNiveauReussi" src="Sons/niveauReussi.mp3" preload="auto"></audio>
+    <audio id="sonJeuReussi" src="Sons/jeuReussi.mp3" preload="auto"></audio>
 
-    <div id="messageGameOver" style="display: none;
-     position: absolute;
-     top: 50%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     font-size: 60px;
-     color: red;
-     background: rgba(0,0,0,0.8);
-     padding: 30px;
-     border: 5px solid red;
-     border-radius: 15px;
-     font-family: Arial, sans-serif;
-     z-index: 999;">
-        GAME OVER
-    </div>
 </body>
 
 </html>
