@@ -65,6 +65,8 @@ function deplacerCamera() {
     }
     // Page Down -> Retour caméra joueur
     if (event.key === "2") {
+        //Si tu veut que les triches soit OFF a chaque fois que tu sort de vue aerienne
+        tricheActive = false;
         arreterPenaliteScoreVueAerienne();
         ajusterHauteurPlafond(0);
         if (cameraSauvPos && cameraSauvTarget && estEnVueMap) {
@@ -123,10 +125,10 @@ function deplacerCamera() {
             document.getElementById("sonNiveauReussi").play();
             score += 10 * temps;
             document.getElementById("score").innerText = `Score : ${score}`;
-        
+
             setTimeout(() => {
                 niveauSuivant(objgl, objProgShaders);
-            }, 1000); 
+            }, 1000);
         }
     }
     if (event.code === "Space") {

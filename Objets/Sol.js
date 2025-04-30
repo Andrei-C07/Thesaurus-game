@@ -10,7 +10,7 @@ function creerObj3DSol(objgl, intNoTexture, estEnclos = false) {
     obj3DSol.couleurs = creerCouleursSol(objgl, [1.0, 1.0, 1.0, 1.0]); 
     obj3DSol.texels = creerTexelsSol(objgl, obj3DSol.fltLargeur, obj3DSol.fltProfondeur, intNoTexture);
     obj3DSol.maillage = creerMaillageSol(objgl);
-
+    
     obj3DSol.transformations = creerTransformations();
 
 
@@ -75,9 +75,8 @@ function creerMaillageSol(objgl) {
         objgl.bindBuffer(objgl.ELEMENT_ARRAY_BUFFER, objMaillageSol);
         objgl.bufferData(objgl.ELEMENT_ARRAY_BUFFER, new Uint16Array(tabMaillage), objgl.STATIC_DRAW);
 
-        // Le nombre de triangles
         objMaillageSol.intNbTriangles = 2;
-        // Le nombre de droites
+
         objMaillageSol.intNbDroites = 0;
 		
         return objMaillageSol;

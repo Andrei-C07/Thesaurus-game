@@ -37,10 +37,11 @@
         let score = 300;
         //VARIABLE GLOBALE POUR LE TEMPS
         const DUREE_NIVEAU = 60;
-        
+
         const tabImages = ['/Textures/Transparent.gif', '/Textures/planks_spruce.png', '/Textures/Ciel.png',
             '/Textures/stonebrick_mossy.png', '/Textures/sandstone_normal.png'
-            , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png', '/Textures/diamond_ore.png', '/Textures/fleche.jpg'];
+            , '/Textures/beacon.png', '/Textures/purpur_pillar_top.png', '/Textures/diamond_ore.png',
+            '/Textures/fleche.jpg', '/Textures/concrete_powder_silver.png'];
         const TEX_TRANSPARENT = 0;
         const TEX_SOL = 1;
         const TEX_CIEL = 2;
@@ -50,6 +51,7 @@
         const TEX_TELERECP = 6;
         const TEX_CHEST = 7;
         const TEX_FLECHE = 8;
+        const TEX_SPAWN = 9;
 
         let tempsRestant = null;
         let penaliteVueAerienne = null;
@@ -62,7 +64,13 @@
         let posJoueurLive = null;
         let cibleJoueurLive = null;
         let nbOuvreurs = 4;
+        let tricheActive = false;
         let temps = DUREE_NIVEAU;
+        let tabFleches = [];
+        let tabTeleporteurs = [];
+        let tabRecepteurs = [];
+        let objTresor = null;
+
 
         async function demarrer() {
             const objCanvas = document.getElementById('monCanvas');
@@ -83,12 +91,35 @@
             objScene3D.teleporteurs = [];
             objScene3D.recepteurs = [];
 
-
             const obj3DSol = creerObj3DSol(objgl, TEX_SOL);
+            tabObjets3D.push(obj3DSol);
+
+            for (let z = 0; z < map.length; z++) {
+                for (let x = 0; x < map[z].length; x++) {
+                    const type = map[z][x];
+                    if (type === "S" || type === "A") {
+                        const patch = creerObj3DSol(objgl, TEX_SPAWN);
+                        patch.fltLargeur = 1;
+                        patch.fltProfondeur = 1;
+
+                        patch.vertex = creerVertexSol(objgl, 1, 1);
+                        patch.texels = creerTexelsSol(objgl, 1, 1, TEX_SPAWN);
+
+                        setPositionX(x, patch.transformations);
+                        setPositionZ(z, patch.transformations);
+                        setPositionY(0.01, patch.transformations); 
+                        tabObjets3D.push(patch);
+                    }
+                }
+            }
+
+
+
+
             const obj3DPlafond = creerObj3DPlafond(objgl, TEX_CIEL, 2.3); //tu peut regler l'hauteur
             tabObjets3D.push(obj3DPlafond);
             objScene3D.plafond = obj3DPlafond;
-            tabObjets3D.push(obj3DSol);
+
 
             //Generation des murs ouvrables et non ouvrables
             for (let z = 0; z < map.length; z++) {
@@ -130,7 +161,8 @@
             setPositionZ(cellule.z + 0.5, coffre.transformations);
             setPositionY(0, coffre.transformations);
             tabObjets3D.push(coffre);
-
+            coffre.binVisible = false;
+            objTresor = coffre;
             objScene3D.coffre = { x: cellule.x, z: cellule.z, objet: coffre };
             //console.log("Coffre placé à", cellule.x, cellule.z);
 
@@ -202,6 +234,7 @@
                     setAngleY(angleDeg, objFleche.transformations);
 
                     tabObjets3D.push(objFleche);
+                    tabFleches.push(objFleche);
                     positionsUtilisees.add(key);
                 }
             }
@@ -222,6 +255,7 @@
             // La vue
             objgl.viewport(0, 0, objgl.drawingBufferWidth, objgl.drawingBufferHeight);
             if (estEnVueMap && objScene3D.indicateur) {
+                mettreAJourVisibiliteTriche();
                 const pos = posJoueurLive;
                 const cible = cibleJoueurLive;
                 console.log(pos);
@@ -271,6 +305,9 @@
                 const texels = objScene3D.tabObjets3D[i].texels;
                 const maillage = objScene3D.tabObjets3D[i].maillage;
                 const transformations = objScene3D.tabObjets3D[i].transformations;
+                const objet = objScene3D.tabObjets3D[i];
+                if (estEnVueMap && objet.binVisible === false) continue;
+
 
                 const matModeleVue = mat4.create();
                 mat4.identity(matModeleVue);
@@ -355,6 +392,40 @@
 
             objgl.clear(objgl.COLOR_BUFFER_BIT | objgl.DEPTH_BUFFER_BIT);
         }
+        function mettreAJourVisibiliteTriche() {
+            if (!estEnVueMap) return;
+
+            for (const fleche of tabFleches) {
+                fleche.binVisible = tricheActive;
+            }
+            for (const tp of tabTeleporteurs) {
+                tp.binVisible = tricheActive;
+            }
+            for (const recepteur of tabRecepteurs) {
+                recepteur.binVisible = tricheActive;
+            }
+            if (objScene3D && objScene3D.coffre?.objet) {
+                objScene3D.coffre.objet.binVisible = tricheActive;
+            }
+        }
+
+
+
+        //TRICHE CTRL + SHIFT + SPACE
+        window.addEventListener("keydown", function (event) {
+            if (event.ctrlKey && event.shiftKey && event.code === "Space") {
+                if (!estEnVueMap) return;
+
+                tricheActive = !tricheActive;
+                mettreAJourVisibiliteTriche();
+
+                if (estEnVueMap) {
+                    effacerCanevas(objgl);
+                    dessiner(objgl, objProgShaders, objScene3D);
+                }
+            }
+        });
+
 
     </script>
 </head>

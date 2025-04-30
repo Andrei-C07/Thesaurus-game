@@ -36,6 +36,7 @@ function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObje
         setPositionZ(z + 0.5, objTele.transformations);
         setPositionY(0, objTele.transformations);
         tabObjets3D.push(objTele);
+        tabTeleporteurs.push(objTele);
         objScene3D.teleporteurs.push({ x, z });
         positionsUtilisees.add(key);
     }
@@ -51,6 +52,7 @@ function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObje
         setPositionZ(z + 0.5, objRecepteur.transformations);
         setPositionY(0, objRecepteur.transformations);
         tabObjets3D.push(objRecepteur);
+        tabRecepteurs.push(objRecepteur);
         objScene3D.recepteurs.push({ x, z });
         positionsUtilisees.add(key);
     }
