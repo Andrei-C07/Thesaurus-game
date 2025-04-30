@@ -29,6 +29,7 @@
     <script type="text/javascript" src="/Jeu/Teleportation.js"></script>
 
     <script type="text/javascript" src="/map.js"></script>
+    <script type="text/javascript" src="/spawnDoor.js"></script>
     <script type="text/javascript">
 
         let objgl = null;
@@ -81,6 +82,7 @@
             effacerCanevas(objgl);
             dessiner(objgl, objProgShaders, objScene3D);
             demarrerCompteARebours();
+            
         }
         async function initScene3D(objgl) {
             const objScene3D = new Object();
@@ -134,15 +136,29 @@
                         tabObjets3D.push(mur);
                     }
 
-                    if (cellule === "w" || cellule === "d") {
+                    if (cellule === "w") {
                         const mur = creerObj3DMur(objgl, TEX_MUR_OUVRABLE, 2.5); // ouvrable 
                         setPositionX(x, mur.transformations);
                         setPositionZ(z, mur.transformations);
                         setPositionY(0, mur.transformations);
                         tabObjets3D.push(mur);
                     }
+
+                    if(cellule === "d"){
+                        const mur = creerObj3DMur(objgl, TEX_MUR_OUVRABLE, 2.5);
+                        setPositionX(x, mur.transformations);
+                        setPositionZ(z, mur.transformations);
+                        setPositionY(0, mur.transformations);
+
+                        objScene3D.porteSpawn = mur;
+                        tabObjets3D.push(mur);
+                    }
                 }
             }
+
+            setTimeout(() => {
+                baisserPorteGraduellement(objScene3D.porteSpawn, objScene3D);
+            }, 5000);
 
             const cellulesLibres = [];
 
@@ -408,8 +424,6 @@
                 objScene3D.coffre.objet.binVisible = tricheActive;
             }
         }
-
-
 
         //TRICHE CTRL + SHIFT + SPACE
         window.addEventListener("keydown", function (event) {

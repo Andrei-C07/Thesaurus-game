@@ -7,7 +7,7 @@ function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObje
     for (let z = 0; z < map.length; z++) {
         for (let x = 0; x < map[z].length; x++) {
             const cellule = map[z][x];
-            if (cellule === "g") {
+            if (cellule === "g" && (x !== objScene3D.coffre.x || z !== objScene3D.coffre.z)) {
                 cellulesDisponibles.push({ x, z });
             }
         }
