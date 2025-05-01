@@ -1,8 +1,14 @@
 let niveau = 1;
+const NIVEAU_MAX = 10;
 
 async function niveauSuivant(objgl, objProgShaders) {
+    if (niveau >= NIVEAU_MAX) {
+        document.getElementById("messageJeuReussi").style.display = "block";
+        document.getElementById("sonJeuReussi").play();
+        jeuTermine = true;
+        return;
+    }
     niveau++;
-    document.getElementById("niveau").innerText = `Niveau : ${niveau}`;
 
     map = initMap(); // Réinitialiser la carte
 
@@ -10,6 +16,15 @@ async function niveauSuivant(objgl, objProgShaders) {
 
     resetPorte(objScene3D.porteSpawn);
 
+    temps = DUREE_NIVEAU;
+    document.getElementById("temps").innerText = `Temps : ${temps}`;
+
+    document.getElementById("niveau").innerText = `Niveau : ${niveau}`;
+    clearInterval(tempsRestant);
+    tempsRestant = null;
+    tempsDemarre = false;
+
+    objScene3D = await initScene3D(objgl);
     effacerCanevas(objgl);
     dessiner(objgl, objProgShaders, objScene3D);
 
@@ -21,8 +36,8 @@ async function niveauSuivant(objgl, objProgShaders) {
 function obtenirObjetsPourNiveau(niveau) {
     const fleches = Math.max(18 - (niveau - 1) * 2, 0);
 
-    const nbTPParNiveau = [0, 1, 1, 2, 2, 3, 3, 4, 4, 5]; 
-    const nbRParNiveau  = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const nbTPParNiveau = [0, 1, 1, 2, 2, 3, 3, 4, 4, 5];
+    const nbRParNiveau = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     const teleporteurs = nbTPParNiveau[niveau - 1] || 0;
     const recepteurs = nbRParNiveau[niveau - 1] || 0;
@@ -39,10 +54,14 @@ function obtenirObjetsPourNiveau(niveau) {
 
 function redemarrerNiveauSansRegenerer() {
     temps = DUREE_NIVEAU;
+
+    score = Math.max(0, score - 200);
+    document.getElementById("score").innerText = `Score : ${score}`;
+
     const objNiveau = obtenirObjetsPourNiveau(niveau);
     nbOuvreurs = objNiveau.ouvreurs;
     document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
-    
+
 
     if (memoNiveau?.mursOuverts) {
         for (const mur of memoNiveau.mursOuverts) {
@@ -63,5 +82,5 @@ function redemarrerNiveauSansRegenerer() {
         dessiner(objgl, objProgShaders, objScene3D);
     });
 
-    demarrerCompteARebours();
+    tempsDemarre = false;
 }

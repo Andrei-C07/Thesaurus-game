@@ -28,6 +28,12 @@ function teleporterJoueurSiSurTeleporteur(objScene3D) {
 }
 
 function deplacerCamera() {
+
+    if (!tempsDemarre) {
+        tempsDemarre = true;
+        demarrerCompteARebours();
+    }
+
     const camera = objScene3D.camera;
     if (jeuTermine) return;
     let fltX;
@@ -139,7 +145,7 @@ function deplacerCamera() {
         }
 
     }
-    if (event.code === "Space") {
+    if (event.code === "Space" && !estEnVueMap) {
         utiliserOuvreur();
         return;
     }
@@ -149,7 +155,7 @@ function deplacerCamera() {
     dessiner(objgl, objProgShaders, objScene3D);
 }
 function utiliserOuvreur() {
-    
+
     if (score < 50) {
         console.log("Ouvreur désactivé : score trop bas (<50)");
         return;
@@ -158,6 +164,10 @@ function utiliserOuvreur() {
         console.log("Pas d'ouvreurs restants!");
         return;
     }
+    nbOuvreurs--;
+    score = Math.max(0, score - 50);
+    document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
+    document.getElementById("score").innerText = `Score : ${score}`;
 
     const camera = objScene3D.camera;
     const joueurX = getPositionCameraX(camera);
@@ -187,7 +197,7 @@ function utiliserOuvreur() {
     // Vérifier si c'est un mur ouvrable
     if (map[celluleZ][celluleX] === "w") {
         // Ouvrir le mur
-        map[celluleZ][celluleX] = "g"; 
+        map[celluleZ][celluleX] = "g";
         if (memoNiveau && memoNiveau.mursOuverts) {
             memoNiveau.mursOuverts.push({ x: celluleX, z: celluleZ });
         }
