@@ -164,10 +164,6 @@ function utiliserOuvreur() {
         console.log("Pas d'ouvreurs restants!");
         return;
     }
-    nbOuvreurs--;
-    score = Math.max(0, score - 50);
-    document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
-    document.getElementById("score").innerText = `Score : ${score}`;
 
     const camera = objScene3D.camera;
     const joueurX = getPositionCameraX(camera);
@@ -211,7 +207,8 @@ function utiliserOuvreur() {
 
         nbOuvreurs--;
         document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
-
+        score = Math.max(0, score - 50);
+        document.getElementById("score").innerText = `Score : ${score}`;
         effacerCanevas(objgl);
         dessiner(objgl, objProgShaders, objScene3D);
     } else {
