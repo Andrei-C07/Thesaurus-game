@@ -4,7 +4,12 @@ async function niveauSuivant(objgl, objProgShaders) {
     niveau++;
     document.getElementById("niveau").innerText = `Niveau : ${niveau}`;
 
+    map = initMap(); // Réinitialiser la carte
+
     objScene3D = await initScene3D(objgl); 
+
+    resetPorte(objScene3D.porteSpawn);
+
     effacerCanevas(objgl);
     dessiner(objgl, objProgShaders, objScene3D);
 

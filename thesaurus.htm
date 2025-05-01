@@ -73,6 +73,7 @@
         let objTresor = null;
         let niveauEnTransition = false;
         let memoNiveau = null;
+        let map = [];
 
 
         async function demarrer() {
@@ -90,6 +91,7 @@
             const objScene3D = new Object();
             const tabObjets3D = new Array();
 
+            map = initMap();
 
             objScene3D.textures = await creerTextures(objgl, tabImages);
             objScene3D.teleporteurs = [];
@@ -116,9 +118,6 @@
                     }
                 }
             }
-
-
-
 
             const obj3DPlafond = creerObj3DPlafond(objgl, TEX_CIEL, 2.3); //tu peut regler l'hauteur
             tabObjets3D.push(obj3DPlafond);
