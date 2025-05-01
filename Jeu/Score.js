@@ -9,10 +9,14 @@ function demarrerCompteARebours() {
                 tempsRestant = null;
                 jeuTermine = true;
 
+                const objNiveau = obtenirObjetsPourNiveau(niveau);
+                nbOuvreurs = objNiveau.ouvreurs;
+                document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
                 document.getElementById("messageGameOver").style.display = "block";
                 document.getElementById("sonGameOver").play();
 
                 retournerAuSpawn();
+                redemarrerNiveauSansRegenerer();
             }
         }, 1000);
     }

@@ -71,6 +71,8 @@
         let tabTeleporteurs = [];
         let tabRecepteurs = [];
         let objTresor = null;
+        let niveauEnTransition = false;
+        let memoNiveau = null;
 
 
         async function demarrer() {
@@ -82,7 +84,7 @@
             effacerCanevas(objgl);
             dessiner(objgl, objProgShaders, objScene3D);
             demarrerCompteARebours();
-            
+
         }
         async function initScene3D(objgl) {
             const objScene3D = new Object();
@@ -109,7 +111,7 @@
 
                         setPositionX(x, patch.transformations);
                         setPositionZ(z, patch.transformations);
-                        setPositionY(0.01, patch.transformations); 
+                        setPositionY(0.01, patch.transformations);
                         tabObjets3D.push(patch);
                     }
                 }
@@ -144,7 +146,7 @@
                         tabObjets3D.push(mur);
                     }
 
-                    if(cellule === "d"){
+                    if (cellule === "d") {
                         const mur = creerObj3DMur(objgl, TEX_MUR_OUVRABLE, 2.5);
                         setPositionX(x, mur.transformations);
                         setPositionZ(z, mur.transformations);
@@ -181,8 +183,11 @@
             objTresor = coffre;
             objScene3D.coffre = { x: cellule.x, z: cellule.z, objet: coffre };
             //console.log("Coffre placé à", cellule.x, cellule.z);
+            const objNiveau = obtenirObjetsPourNiveau(niveau);
 
-            placerTeleporteursEtRecepteurs(objgl, objScene3D, TEX_TELETRANS, tabObjets3D);
+            nbOuvreurs = objNiveau.ouvreurs;
+
+            placerTeleporteursEtRecepteurs(objgl, objScene3D, tabObjets3D, objNiveau.teleporteurs, objNiveau.recepteurs);
             placerFlechesVersTresor(objgl, objScene3D, TEX_FLECHE, tabObjets3D);
 
             objScene3D.tabObjets3D = tabObjets3D;
@@ -222,7 +227,7 @@
                     }
                 }
 
-                let nbFleches = 18 - (niveau - 1) * 2;
+                let nbFleches = objNiveau.fleches;
                 nbFleches = Math.max(nbFleches, 0); // Pas négatif
 
                 const positionsUtilisees = new Set();
@@ -263,6 +268,15 @@
             tabObjets3D.push(indicateur);
             objScene3D.indicateur = indicateur;
 
+            memoNiveau = {
+                coffre: objScene3D.coffre,
+                teleporteurs: [...objScene3D.teleporteurs],
+                recepteurs: [...objScene3D.recepteurs],
+                fleches: [...tabFleches],
+                mursOuverts: [] 
+            };
+
+            console.log(`Niveau ${niveau} — Flèches: ${objNiveau.fleches}, TP: ${objNiveau.teleporteurs}, R: ${objNiveau.recepteurs}, Ouvreurs: ${objNiveau.ouvreurs}`);
             return objScene3D;
         }
 
@@ -274,7 +288,6 @@
                 mettreAJourVisibiliteTriche();
                 const pos = posJoueurLive;
                 const cible = cibleJoueurLive;
-                console.log(pos);
                 const dx = cible[0] - pos[0];
                 const dz = cible[2] - pos[2];
                 const angle = Math.atan2(dx, dz) * 180 / Math.PI;
@@ -438,6 +451,19 @@
                     dessiner(objgl, objProgShaders, objScene3D);
                 }
             }
+            //POUR TESTER NBR DE RECEP/TELETRANS PAR NIVEAU
+            if (event.code === "KeyN") {
+                niveau++;
+                console.log("Passage manuel au niveau", niveau);
+                niveauEnTransition = true;
+                initScene3D(objgl).then((scene) => {
+                    objScene3D = scene;
+                    effacerCanevas(objgl);
+                    dessiner(objgl, objProgShaders, objScene3D);
+                    niveauEnTransition = false;
+                });
+            }
+
         });
 
 
@@ -462,10 +488,10 @@
     padding: 30px;
     font-family: 'Press Start 2P', fantasy;
     z-index: 999;">
-        GAME OVER
-    </div>
+            GAME OVER
+        </div>
 
-    <div id="messageNiveauReussi" style="display: none;
+        <div id="messageNiveauReussi" style="display: none;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -478,10 +504,10 @@
     border-radius: 15px;
     font-family: Arial, sans-serif;
     z-index: 999;">
-        NIVEAU RÉUSSI
-    </div>
+            NIVEAU RÉUSSI
+        </div>
 
-    <div id="messageJeuReussi" style="display: none;
+        <div id="messageJeuReussi" style="display: none;
    position: absolute;
    top: 50%;
    left: 50%;
@@ -494,12 +520,12 @@
    border-radius: 15px;
    font-family: Arial, sans-serif;
    z-index: 999;">
-        FÉLICITATIONS!!! <br>
-        VOUS AVEZ GAGNÉ!!!
-    </div>
+            FÉLICITATIONS!!! <br>
+            VOUS AVEZ GAGNÉ!!!
+        </div>
 
         <div id="infoJeu"
-        style="text-align: center; font-family: fantasy; font-size: 20px; color: white; padding: 10px; margin-top: 10px; position: absolute; bottom: 10px; left: 50%; text-align: center; transform: translateX(-50%); z-index: 1000;">
+            style="text-align: center; font-family: fantasy; font-size: 20px; color: white; padding: 10px; margin-top: 10px; position: absolute; bottom: 10px; left: 50%; text-align: center; transform: translateX(-50%); z-index: 1000;">
             <span id="niveau">Niveau : 1</span> |
             <span id="ouvreurs">Ouvreurs : 4</span> |
             <span id="score">Score : 300</span> |
