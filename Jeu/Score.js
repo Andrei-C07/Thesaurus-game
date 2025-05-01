@@ -7,20 +7,32 @@ function demarrerCompteARebours() {
             } else {
                 clearInterval(tempsRestant);
                 tempsRestant = null;
-                jeuTermine = true;
 
+                if (score < 200) {
+                    jeuTermine = true;
+                    document.getElementById("messageGameOver").style.display = "block";
+                    document.getElementById("sonGameOver").play();
+                    return;
+                }
                 const objNiveau = obtenirObjetsPourNiveau(niveau);
                 nbOuvreurs = objNiveau.ouvreurs;
                 document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
-                document.getElementById("messageGameOver").style.display = "block";
-                document.getElementById("sonGameOver").play();
 
                 retournerAuSpawn();
-                redemarrerNiveauSansRegenerer();
+
+                if (score < 200) {
+                    document.getElementById("messageGameOver").style.display = "block";
+                    document.getElementById("sonGameOver").play();
+                    jeuTermine = true;
+                } else {
+                    redemarrerNiveauSansRegenerer();
+                }
+                
             }
         }, 1000);
     }
 }
+
 
 function demarrerPenaliteScoreVueAerienne() {
     if (penaliteVueAerienne === null) {

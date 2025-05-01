@@ -86,6 +86,19 @@
             effacerCanevas(objgl);
             dessiner(objgl, objProgShaders, objScene3D);
 
+            document.getElementById("btnRecommencer").addEventListener("click", () => {
+                if (jeuTermine) return;
+
+                score = Math.max(0, score - 200);
+                document.getElementById("score").innerText = `Score : ${score}`;
+                if (score < 200) {
+                    document.getElementById("messageGameOver").style.display = "block";
+                    document.getElementById("sonGameOver").play();
+                    jeuTermine = true;
+                    return;
+                }
+                redemarrerNiveauSansRegenerer();
+            });
         }
         async function initScene3D(objgl) {
             const objScene3D = new Object();
@@ -274,7 +287,7 @@
                 teleporteurs: [...objScene3D.teleporteurs],
                 recepteurs: [...objScene3D.recepteurs],
                 fleches: [...tabFleches],
-                mursOuverts: [] 
+                mursOuverts: []
             };
 
             console.log(`Niveau ${niveau} — Flèches: ${objNiveau.fleches}, TP: ${objNiveau.teleporteurs}, R: ${objNiveau.recepteurs}, Ouvreurs: ${objNiveau.ouvreurs}`);
@@ -466,8 +479,6 @@
             }
 
         });
-
-
     </script>
 </head>
 
@@ -477,6 +488,10 @@
             style="display: block;">
             Votre navigateur ne supporte pas la balise canvas
         </canvas>
+
+        <button id="btnRecommencer" style="position: absolute; top: 20px; right: 20px; z-index: 9999; font-size: 20px;">
+            Recommencer
+        </button>
 
         <div id="messageGameOver" style="display: none;
     position: absolute;
