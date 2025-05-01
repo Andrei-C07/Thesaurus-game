@@ -10,6 +10,12 @@ async function niveauSuivant(objgl, objProgShaders) {
     }
     niveau++;
 
+    map = initMap(); // Réinitialiser la carte
+
+    objScene3D = await initScene3D(objgl); 
+
+    resetPorte(objScene3D.porteSpawn);
+
     temps = DUREE_NIVEAU;
     document.getElementById("temps").innerText = `Temps : ${temps}`;
 

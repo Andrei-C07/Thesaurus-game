@@ -25,3 +25,12 @@ function baisserPorteGraduellement(porte, objScene3D) {
     animer();
     sonMur.play();
 }
+
+function resetPorte(porte){
+    setPositionY(0, porte.transformations);
+    map[13][15] = "d";
+    console.log("resetPorte", map[13][15]);
+    setTimeout(() => {
+        baisserPorteGraduellement(objScene3D.porteSpawn, objScene3D);
+    }, 5000);
+}
