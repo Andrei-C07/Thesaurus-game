@@ -1,6 +1,8 @@
-function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObjets3D) {
+function placerTeleporteursEtRecepteurs(objgl, objScene3D, tabObjets3D, nbTeleporteurs, nbRecepteurs) {
     objScene3D.teleporteurs = [];
     objScene3D.recepteurs = [];
+    tabTeleporteurs = [];
+    tabRecepteurs = [];
 
     const cellulesDisponibles = [];
 
@@ -19,14 +21,12 @@ function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObje
         [cellulesDisponibles[i], cellulesDisponibles[j]] = [cellulesDisponibles[j], cellulesDisponibles[i]];
     }
 
-    const nbTeleporteurs = 5;
-    const nbRecepteurs = 5;
     let index = 0;
-
     const positionsUtilisees = new Set();
 
-    // Placer les téléporteurs
-    for (let i = 0; i < nbTeleporteurs && index < cellulesDisponibles.length; i++) {
+    let i = 0;
+    while (i < nbTeleporteurs && index < cellulesDisponibles.length) {
+
         const { x, z } = cellulesDisponibles[index++];
         const key = `${x},${z}`;
         if (positionsUtilisees.has(key)) continue;
@@ -39,10 +39,15 @@ function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObje
         tabTeleporteurs.push(objTele);
         objScene3D.teleporteurs.push({ x, z });
         positionsUtilisees.add(key);
+        i++;
     }
 
-    // Placer les récepteurs
-    for (let i = 0; i < nbRecepteurs && index < cellulesDisponibles.length; i++) {
+    //Récepteurs
+    let k = 0;
+
+    while (k < nbRecepteurs && index < cellulesDisponibles.length) {
+
+
         const { x, z } = cellulesDisponibles[index++];
         const key = `${x},${z}`;
         if (positionsUtilisees.has(key)) continue;
@@ -55,5 +60,6 @@ function placerTeleporteursEtRecepteurs(objgl, objScene3D, intNoTexture, tabObje
         tabRecepteurs.push(objRecepteur);
         objScene3D.recepteurs.push({ x, z });
         positionsUtilisees.add(key);
+        k++;
     }
 }

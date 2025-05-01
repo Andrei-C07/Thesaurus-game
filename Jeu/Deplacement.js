@@ -40,6 +40,10 @@ function deplacerCamera() {
     //On va changer les page up and page down apres quon finit tout
     //Page Up -> map view
     if (event.key === "1" && !estEnVueMap) {
+        if (score < 10) {
+            console.log("Vue aérienne désactivée : score trop bas (<10)");
+            return;
+        }
         demarrerPenaliteScoreVueAerienne();
         cameraSauvPos = [...getPositionsCameraXYZ(camera)];
         cameraSauvTarget = [...getCiblesCameraXYZ(camera)];
@@ -120,7 +124,9 @@ function deplacerCamera() {
         const joueurX = Math.floor(getPositionCameraX(objScene3D.camera));
         const joueurZ = Math.floor(getPositionCameraZ(objScene3D.camera));
 
-        if (joueurX === objScene3D.coffre.x && joueurZ === objScene3D.coffre.z) {
+        if (joueurX === objScene3D.coffre.x && joueurZ === objScene3D.coffre.z && !niveauEnTransition) {
+            niveauEnTransition = true;
+
             console.log("Trésor trouvé !");
             document.getElementById("sonNiveauReussi").play();
             score += 10 * temps;
@@ -128,8 +134,10 @@ function deplacerCamera() {
 
             setTimeout(() => {
                 niveauSuivant(objgl, objProgShaders);
+                niveauEnTransition = false;
             }, 1000);
         }
+
     }
     if (event.code === "Space") {
         utiliserOuvreur();
@@ -141,6 +149,11 @@ function deplacerCamera() {
     dessiner(objgl, objProgShaders, objScene3D);
 }
 function utiliserOuvreur() {
+    
+    if (score < 50) {
+        console.log("Ouvreur désactivé : score trop bas (<50)");
+        return;
+    }
     if (nbOuvreurs <= 0) {
         console.log("Pas d'ouvreurs restants!");
         return;
@@ -152,11 +165,9 @@ function utiliserOuvreur() {
     const cibleX = getCibleCameraX(camera);
     const cibleZ = getCibleCameraZ(camera);
 
-    // Calcul de la direction
     const dx = cibleX - joueurX;
     const dz = cibleZ - joueurZ;
 
-    // Trouver la direction principale
     let direction = "";
     if (Math.abs(dx) > Math.abs(dz)) {
         direction = dx > 0 ? "droite" : "gauche";
@@ -176,7 +187,11 @@ function utiliserOuvreur() {
     // Vérifier si c'est un mur ouvrable
     if (map[celluleZ][celluleX] === "w") {
         // Ouvrir le mur
-        map[celluleZ][celluleX] = "g"; // Mettre à 'g' = chemin
+        map[celluleZ][celluleX] = "g"; 
+        if (memoNiveau && memoNiveau.mursOuverts) {
+            memoNiveau.mursOuverts.push({ x: celluleX, z: celluleZ });
+        }
+
 
         // Supprimer visuellement le mur dans objScene3D
         objScene3D.tabObjets3D = objScene3D.tabObjets3D.filter(obj => {
@@ -184,11 +199,9 @@ function utiliserOuvreur() {
             return !(Math.floor(pos[0]) === celluleX && Math.floor(pos[2]) === celluleZ && pos[1] === 0);
         });
 
-        // Décrémenter ouvreurs
         nbOuvreurs--;
         document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
 
-        // Redessiner la scène
         effacerCanevas(objgl);
         dessiner(objgl, objProgShaders, objScene3D);
     } else {
