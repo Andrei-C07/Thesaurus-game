@@ -23,4 +23,5 @@ function baisserPorteGraduellement(porte, objScene3D) {
     }
 
     animer();
+    sonMur.play();
 }
