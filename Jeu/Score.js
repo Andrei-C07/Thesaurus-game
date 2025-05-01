@@ -1,5 +1,5 @@
 function demarrerCompteARebours() {
-    if (tempsRestant === null) {
+    if (tempsRestant === null && !jeuTermine) {
         tempsRestant = setInterval(() => {
             if (temps > 0) {
                 temps--;
@@ -21,6 +21,7 @@ function demarrerCompteARebours() {
         }, 1000);
     }
 }
+
 function demarrerPenaliteScoreVueAerienne() {
     if (penaliteVueAerienne === null) {
         penaliteVueAerienne = setInterval(() => {

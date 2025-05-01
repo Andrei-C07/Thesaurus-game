@@ -28,6 +28,12 @@ function teleporterJoueurSiSurTeleporteur(objScene3D) {
 }
 
 function deplacerCamera() {
+
+    if (!tempsDemarre) {
+        tempsDemarre = true;
+        demarrerCompteARebours();
+    }
+    
     const camera = objScene3D.camera;
     if (jeuTermine) return;
     let fltX;
@@ -149,7 +155,7 @@ function deplacerCamera() {
     dessiner(objgl, objProgShaders, objScene3D);
 }
 function utiliserOuvreur() {
-    
+
     if (score < 50) {
         console.log("Ouvreur désactivé : score trop bas (<50)");
         return;

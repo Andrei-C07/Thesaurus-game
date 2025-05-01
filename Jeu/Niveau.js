@@ -1,8 +1,22 @@
 let niveau = 1;
+const NIVEAU_MAX = 10;
 
 async function niveauSuivant(objgl, objProgShaders) {
+    if (niveau >= NIVEAU_MAX) {
+        document.getElementById("messageJeuReussi").style.display = "block";
+        document.getElementById("sonJeuReussi").play();
+        jeuTermine = true;
+        return;
+    }    
     niveau++;
+
+    temps = DUREE_NIVEAU;
+    document.getElementById("temps").innerText = `Temps : ${temps}`;
+
     document.getElementById("niveau").innerText = `Niveau : ${niveau}`;
+    clearInterval(tempsRestant);  
+    tempsRestant = null;          
+    tempsDemarre = false;
 
     objScene3D = await initScene3D(objgl); 
     effacerCanevas(objgl);
@@ -58,5 +72,5 @@ function redemarrerNiveauSansRegenerer() {
         dessiner(objgl, objProgShaders, objScene3D);
     });
 
-    demarrerCompteARebours();
+    tempsDemarre = false;
 }

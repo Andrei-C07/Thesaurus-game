@@ -73,6 +73,8 @@
         let objTresor = null;
         let niveauEnTransition = false;
         let memoNiveau = null;
+        let tempsDemarre = false;
+
 
 
         async function demarrer() {
@@ -83,7 +85,6 @@
 
             effacerCanevas(objgl);
             dessiner(objgl, objProgShaders, objScene3D);
-            demarrerCompteARebours();
 
         }
         async function initScene3D(objgl) {
