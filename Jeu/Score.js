@@ -16,7 +16,7 @@ function demarrerCompteARebours() {
                 }
                 const objNiveau = obtenirObjetsPourNiveau(niveau);
                 nbOuvreurs = objNiveau.ouvreurs;
-                document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
+                document.getElementById("ouvreurs").innerHTML = nbOuvreurs;
 
                 retournerAuSpawn();
 
@@ -38,7 +38,8 @@ function demarrerPenaliteScoreVueAerienne() {
     if (penaliteVueAerienne === null) {
         penaliteVueAerienne = setInterval(() => {
             score = Math.max(0, score - 10);
-            document.getElementById("score").innerText = `Score : ${score}`;
+            document.getElementById("score").innerHTML = score;
+
 
             if (score === 0) {
                 clearInterval(penaliteVueAerienne);

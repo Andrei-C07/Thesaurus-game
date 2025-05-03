@@ -136,7 +136,8 @@ function deplacerCamera() {
             console.log("Trésor trouvé !");
             document.getElementById("sonNiveauReussi").play();
             score += 10 * temps;
-            document.getElementById("score").innerText = `Score : ${score}`;
+            document.getElementById("score").innerHTML = score;
+
 
             setTimeout(() => {
                 niveauSuivant(objgl, objProgShaders);
@@ -206,9 +207,10 @@ function utiliserOuvreur() {
         });
 
         nbOuvreurs--;
-        document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
+        document.getElementById("ouvreurs").innerHTML = nbOuvreurs;
         score = Math.max(0, score - 50);
-        document.getElementById("score").innerText = `Score : ${score}`;
+        document.getElementById("score").innerHTML = score;
+
         effacerCanevas(objgl);
         dessiner(objgl, objProgShaders, objScene3D);
     } else {

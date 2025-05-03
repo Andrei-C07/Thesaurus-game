@@ -6,7 +6,7 @@ function creerObj3DIndicateur(objgl) {
     obj3D.fltHauteur = 0.01;
 
     obj3D.vertex = creerVertexIndicateur(objgl);
-    obj3D.couleurs = creerCouleursIndicateur(objgl, [1.0, 0.0, 0.0, 1.0]); // rouge
+    obj3D.couleurs = creerCouleursIndicateur(objgl, [0.0, 0.0, 1.0, 1.0]); // rouge
     obj3D.texels = creerTexelsIndicateur(objgl, TEX_TRANSPARENT);
     obj3D.maillage = creerMaillageIndicateur(objgl);
     obj3D.transformations = creerTransformations();

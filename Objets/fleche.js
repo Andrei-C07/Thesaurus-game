@@ -1,35 +1,45 @@
-// Fleche.js
-
 function creerObj3DFleche(objgl, intNoTexture) {
     const objFleche = new Object();
     const longueur = 0.8;
     const largeur = 0.4;
-    const hauteur = 0.1;
+    const hauteur = 0.07; 
 
     const demiLargeur = largeur / 2;
     const demiLongueur = longueur / 2;
+    const demiHauteur = hauteur / 2;
 
     const tabVertex = [
-        0, hauteur, demiLongueur,     // Sommet
-        -demiLargeur, 0, -demiLongueur,
-        demiLargeur, 0, -demiLongueur,
-    ];
-
-    const tabTexels = [
-        0.5, 1.0,
-        0.0, 0.0,
-        1.0, 0.0,
-    ];
-
-    const tabCouleurs = [
-        1.0, 0.0, 0.0, 1.0,  
-        1.0, 0.0, 0.0, 1.0,
-        1.0, 0.0, 0.0, 1.0,
+        0,  demiHauteur,  demiLongueur,   
+        -demiLargeur,  demiHauteur, -demiLongueur,
+         demiLargeur,  demiHauteur, -demiLongueur,
+         
+        0, -demiHauteur,  demiLongueur,
+        -demiLargeur, -demiHauteur, -demiLongueur,
+         demiLargeur, -demiHauteur, -demiLongueur,
     ];
 
     const tabIndices = [
-        0, 1, 2
+        // Face avant
+        0, 1, 2,
+        // Face arrière
+        3, 5, 4,
+        // Côtés
+        0, 2, 5,
+        0, 5, 3,
+
+        0, 3, 4,
+        0, 4, 1,
+
+        1, 4, 5,
+        1, 5, 2
     ];
+
+    const tabCouleurs = [];
+    for (let i = 0; i < tabVertex.length / 3; i++) {
+        tabCouleurs.push(1.0, 0.0, 0.0, 1.0); 
+    }
+
+    const tabTexels = new Array(tabVertex.length / 3 * 2).fill(0.5); 
 
     objFleche.vertex = objgl.createBuffer();
     objgl.bindBuffer(objgl.ARRAY_BUFFER, objFleche.vertex);
@@ -51,7 +61,6 @@ function creerObj3DFleche(objgl, intNoTexture) {
     objFleche.maillage.intNbTriangles = tabIndices.length / 3;
 
     objFleche.transformations = creerTransformations();
-
     objFleche.estFleche = true;
 
     return objFleche;

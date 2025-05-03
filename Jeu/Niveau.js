@@ -19,7 +19,7 @@ async function niveauSuivant(objgl, objProgShaders) {
     temps = DUREE_NIVEAU;
     document.getElementById("temps").innerText = `Temps : ${temps}`;
 
-    document.getElementById("niveau").innerText = `Niveau : ${niveau}`;
+    document.getElementById("niveau").innerHTML = niveau;
     clearInterval(tempsRestant);
     tempsRestant = null;
     tempsDemarre = false;
@@ -56,11 +56,12 @@ function redemarrerNiveauSansRegenerer() {
     temps = DUREE_NIVEAU;
 
     score = Math.max(0, score - 200);
-    document.getElementById("score").innerText = `Score : ${score}`;
+    document.getElementById("score").innerHTML = score;
+
 
     const objNiveau = obtenirObjetsPourNiveau(niveau);
     nbOuvreurs = objNiveau.ouvreurs;
-    document.getElementById("ouvreurs").innerText = `Ouvreurs : ${nbOuvreurs}`;
+    document.getElementById("ouvreurs").innerHTML = nbOuvreurs;
 
 
     if (memoNiveau?.mursOuverts) {
