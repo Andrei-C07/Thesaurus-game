@@ -127,10 +127,11 @@ function deplacerCamera() {
     }
 
     if (objScene3D.coffre) {
-        const joueurX = Math.floor(getPositionCameraX(objScene3D.camera));
-        const joueurZ = Math.floor(getPositionCameraZ(objScene3D.camera));
+        const dx = getPositionCameraX(objScene3D.camera) - (objScene3D.coffre.x + 0.5);
+        const dz = getPositionCameraZ(objScene3D.camera) - (objScene3D.coffre.z + 0.5);
 
-        if (joueurX === objScene3D.coffre.x && joueurZ === objScene3D.coffre.z && !niveauEnTransition) {
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance < 0.3 && !niveauEnTransition) {
             niveauEnTransition = true;
 
             console.log("Trésor trouvé !");
@@ -138,19 +139,54 @@ function deplacerCamera() {
             score += 10 * temps;
             document.getElementById("score").innerHTML = score;
 
-
             setTimeout(() => {
                 niveauSuivant(objgl, objProgShaders);
                 niveauEnTransition = false;
             }, 1000);
         }
 
+
     }
     if (event.code === "Space" && !estEnVueMap) {
         utiliserOuvreur();
+        const sonMur = document.getElementById("sonMur");
+        if (sonMur) sonMur.play();
         return;
     }
     teleporterJoueurSiSurTeleporteur(objScene3D);
+
+    const joueurX = Math.floor(getPositionCameraX(camera));
+    const joueurZ = Math.floor(getPositionCameraZ(camera));
+
+    const surE = (map[joueurZ][joueurX] === "E");
+    const surG = (map[joueurZ][joueurX] === "g");
+    //console.log(`etaitSurE=${etaitSurE}, surE=${surE}, surG=${surG}, pos=(${joueurX},${joueurZ})`);
+
+    if (!aQuitteEnclos && etaitSurE && !surE) {
+        setTimeout(() => {
+            const joueurX = Math.floor(getPositionCameraX(camera));
+            const joueurZ = Math.floor(getPositionCameraZ(camera));
+            if (map[joueurZ][joueurX] === "g") {
+                aQuitteEnclos = true;
+                //console.log("Le joueur a bien quitté l’enclos via E vers un couloir.");
+    
+                const x = objScene3D.posPorteSpawn.x;
+                const z = objScene3D.posPorteSpawn.z;
+    
+                map[z][x] = "b";
+                const murBloc = creerObj3DMur(objgl, TEX_MUR, 2.5);
+                setPositionX(x, murBloc.transformations);
+                setPositionZ(z, murBloc.transformations);
+                setPositionY(0, murBloc.transformations);
+                objScene3D.tabObjets3D.push(murBloc);
+                document.getElementById("sonMur").play();
+                effacerCanevas(objgl);
+                dessiner(objgl, objProgShaders, objScene3D);
+            }
+        }, 850); 
+    }
+    etaitSurE = surE;
+    
 
     effacerCanevas(objgl);
     dessiner(objgl, objProgShaders, objScene3D);
@@ -216,4 +252,5 @@ function utiliserOuvreur() {
     } else {
         console.log("Aucun mur ouvrable devant !");
     }
+
 }

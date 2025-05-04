@@ -31,7 +31,8 @@
     <script type="text/javascript" src="/map.js"></script>
     <script type="text/javascript" src="/spawnDoor.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-default.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
 
     <script type="text/javascript">
@@ -79,6 +80,8 @@
         let memoNiveau = null;
         let map = [];
         let tempsDemarre = false;
+        let etaitSurE = false;
+        let aQuitteEnclos = false;
 
 
 
@@ -87,27 +90,19 @@
             objgl = initWebGL(objCanvas);
             objProgShaders = initShaders(objgl);
             objScene3D = await initScene3D(objgl);
+            document.getElementById("sonDebutNiveau").play();
+
 
             effacerCanevas(objgl);
             dessiner(objgl, objProgShaders, objScene3D);
-
-            document.getElementById("btnRecommencer").addEventListener("click", () => {
-                if (jeuTermine) return;
-
-                score = Math.max(0, score - 200);
-                document.getElementById("score").innerHTML = score;
-                if (score < 200) {
-                    document.getElementById("messageGameOver").style.display = "block";
-                    document.getElementById("sonGameOver").play();
-                    jeuTermine = true;
-                    return;
-                }
-                redemarrerNiveauSansRegenerer();
-            });
         }
+
         async function initScene3D(objgl) {
             const objScene3D = new Object();
             const tabObjets3D = new Array();
+            objScene3D.enclosVerrouille = false;
+            objScene3D.aQuitteEnclos = false;
+
 
             map = initMap();
 
@@ -121,7 +116,7 @@
             for (let z = 0; z < map.length; z++) {
                 for (let x = 0; x < map[z].length; x++) {
                     const type = map[z][x];
-                    if (type === "S" || type === "A") {
+                    if (type === "S" || type === "A" || type === "E") {
                         const patch = creerObj3DSol(objgl, TEX_SPAWN);
                         patch.fltLargeur = 1;
                         patch.fltProfondeur = 1;
@@ -168,7 +163,7 @@
                         setPositionX(x, mur.transformations);
                         setPositionZ(z, mur.transformations);
                         setPositionY(0, mur.transformations);
-
+                        objScene3D.posPorteSpawn = { x, z };
                         objScene3D.porteSpawn = mur;
                         tabObjets3D.push(mur);
                     }
@@ -236,13 +231,18 @@
                 for (let z = 0; z < map.length; z++) {
                     for (let x = 0; x < map[z].length; x++) {
                         if (map[z][x] === "g") {
-                            // Ne pas prendre la cellule du coffre
-                            if (x !== objScene3D.coffre.x || z !== objScene3D.coffre.z) {
+                            const isTresor = (x === objScene3D.coffre.x && z === objScene3D.coffre.z);
+                            const isTeleporteur = objScene3D.teleporteurs.some(tp => tp.x === x && tp.z === z);
+                            const isRecepteur = objScene3D.recepteurs.some(r => r.x === x && r.z === z);
+
+                            if (!isTresor && !isTeleporteur && !isRecepteur) {
                                 cellulesLibres.push({ x, z });
                             }
                         }
                     }
                 }
+
+
 
                 let nbFleches = objNiveau.fleches;
                 nbFleches = Math.max(nbFleches, 0); // Pas négatif
@@ -285,14 +285,7 @@
             tabObjets3D.push(indicateur);
             objScene3D.indicateur = indicateur;
 
-            memoNiveau = {
-                coffre: objScene3D.coffre,
-                teleporteurs: [...objScene3D.teleporteurs],
-                recepteurs: [...objScene3D.recepteurs],
-                fleches: [...tabFleches],
-                mursOuverts: []
-            };
-
+            saveMemoNiveau(objScene3D);
             console.log(`Niveau ${niveau} — Flèches: ${objNiveau.fleches}, TP: ${objNiveau.teleporteurs}, R: ${objNiveau.recepteurs}, Ouvreurs: ${objNiveau.ouvreurs}`);
             return objScene3D;
         }
@@ -302,6 +295,7 @@
             // La vue
             objgl.viewport(0, 0, objgl.drawingBufferWidth, objgl.drawingBufferHeight);
             if (estEnVueMap && objScene3D.indicateur) {
+
                 mettreAJourVisibiliteTriche();
                 const pos = posJoueurLive;
                 const cible = cibleJoueurLive;
@@ -492,10 +486,6 @@
             Votre navigateur ne supporte pas la balise canvas
         </canvas>
 
-        <button id="btnRecommencer" style="position: absolute; top: 20px; right: 20px; z-index: 9999; font-size: 20px;">
-            Recommencer
-        </button>
-
         <div id="messageGameOver" style="display: none;
     position: absolute;
     top: 50%;
@@ -546,8 +536,10 @@
         <div id="infoJeu"
             style="text-align: center; font-family: fantasy; font-size: 30px; color: rgb(255, 0, 0); font-weight: bolder ;padding: 10px; margin-top: 10px; position: absolute; bottom: 10px; left: 50%; text-align: center; transform: translateX(-50%); z-index: 1000;">
             <span style="margin-right: 6px;">Niveau :</span><span id="niveau" class="odometer">1</span> |
-            <span style="margin-right: 6px; margin-left: 10px;">Ouvreurs :</span><span id="ouvreurs" class="odometer">4</span> |
-            <span style="margin-right: 6px; margin-left: 10px;">Score :</span><span id="score" class="odometer">300</span> |
+            <span style="margin-right: 6px; margin-left: 10px;">Ouvreurs :</span><span id="ouvreurs"
+                class="odometer">4</span> |
+            <span style="margin-right: 6px; margin-left: 10px;">Score :</span><span id="score"
+                class="odometer">300</span> |
             <span style="margin-right: 6px; margin-left: 10px;">Temps :</span><span id="temps">60</span>
         </div>
     </div>
@@ -558,6 +550,7 @@
     <audio id="sonNiveauReussi" src="Sons/niveauReussi.mp3" preload="auto"></audio>
     <audio id="sonJeuReussi" src="Sons/jeuReussi.mp3" preload="auto"></audio>
     <audio id="sonMur" src="Sons/mur.mp3" preload="auto"></audio>
+    <audio id="sonTempsFini" src="Sons/sonTempsFini.mp3" preload="auto"></audio>
 
 </body>
 

@@ -3,35 +3,32 @@ function demarrerCompteARebours() {
         tempsRestant = setInterval(() => {
             if (temps > 0) {
                 temps--;
-                document.getElementById("temps").innerText = `Temps : ${temps}`;
+                document.getElementById("temps").innerText = temps;
             } else {
                 clearInterval(tempsRestant);
                 tempsRestant = null;
-
+                const sonTempsFini = document.getElementById("sonTempsFini");
+                if (sonTempsFini) sonTempsFini.play();
                 if (score < 200) {
                     jeuTermine = true;
                     document.getElementById("messageGameOver").style.display = "block";
                     document.getElementById("sonGameOver").play();
                     return;
                 }
+                temps = DUREE_NIVEAU;
+                document.getElementById("temps").innerText = temps;
+
                 const objNiveau = obtenirObjetsPourNiveau(niveau);
                 nbOuvreurs = objNiveau.ouvreurs;
                 document.getElementById("ouvreurs").innerHTML = nbOuvreurs;
 
-                retournerAuSpawn();
-
-                if (score < 200) {
-                    document.getElementById("messageGameOver").style.display = "block";
-                    document.getElementById("sonGameOver").play();
-                    jeuTermine = true;
-                } else {
-                    redemarrerNiveauSansRegenerer();
-                }
-                
+                retournerAuSpawn();  
+                redemarrerNiveauSansRegenerer(); 
             }
         }, 1000);
     }
 }
+
 
 
 function demarrerPenaliteScoreVueAerienne() {
@@ -67,7 +64,7 @@ function retournerAuSpawn() {
     const cibleFinale = [...cibleJoueur];
 
     let progress = 0;
-    const duree = 2000;
+    const duree = 1000;
     const startTime = performance.now();
 
     function animationRetour() {
@@ -76,7 +73,7 @@ function retournerAuSpawn() {
 
         const interpolate = (start, end) => start + (end - start) * progress;
 
-        const hauteurVol = 3;
+        const hauteurVol = 1.5;
 
         const yIntermediaire = positionFinale[1] + hauteurVol * (1 - Math.abs(0.5 - progress) * 2);
 
