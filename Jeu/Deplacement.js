@@ -45,7 +45,7 @@ function deplacerCamera() {
     let fltRayon;
     //On va changer les page up and page down apres quon finit tout
     //Page Up -> map view
-    if (event.key === "1" && !estEnVueMap) {
+    if (event.key === "PageUp" && !estEnVueMap) {
         if (score < 10) {
             console.log("Vue aérienne désactivée : score trop bas (<10)");
             return;
@@ -74,7 +74,7 @@ function deplacerCamera() {
         return;
     }
     // Page Down -> Retour caméra joueur
-    if (event.key === "2") {
+    if (event.key === "PageDown") {
         //Si tu veut que les triches soit OFF a chaque fois que tu sort de vue aerienne
         tricheActive = false;
         arreterPenaliteScoreVueAerienne();
@@ -212,7 +212,7 @@ function utiliserOuvreur() {
         map[celluleZ][celluleX] = "g";
         if (memoNiveau && memoNiveau.mursOuverts) {
             memoNiveau.mursOuverts.push({ x: celluleX, z: celluleZ });
-            const sonMur = document.getElementById("sonMur");
+            const sonMur = document.getElementById("sonMurOuvreur");
             if (sonMur) sonMur.play();
         }
 

@@ -35,8 +35,10 @@ async function niveauSuivant(objgl, objProgShaders) {
     tricheActive = false;
     mettreAJourVisibiliteTriche();
 
-    const sonDebut = document.getElementById("sonDebutNiveau");
-    if (sonDebut) sonDebut.play();
+    setTimeout( () => {
+        const sonDebut = document.getElementById("sonDebutNiveau");
+        if (sonDebut) sonDebut.play()
+    }, 1700);
 }
 
 

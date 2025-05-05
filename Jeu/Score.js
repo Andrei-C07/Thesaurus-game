@@ -7,13 +7,14 @@ function demarrerCompteARebours() {
             } else {
                 clearInterval(tempsRestant);
                 tempsRestant = null;
-                const sonTempsFini = document.getElementById("sonTempsFini");
-                if (sonTempsFini) sonTempsFini.play();
                 if (score < 200) {
                     jeuTermine = true;
                     document.getElementById("messageGameOver").style.display = "block";
                     document.getElementById("sonGameOver").play();
                     return;
+                }else{
+                    const sonTempsFini = document.getElementById("sonTempsFini");
+                    if (sonTempsFini) sonTempsFini.play();
                 }
                 temps = DUREE_NIVEAU;
                 document.getElementById("temps").innerText = temps;

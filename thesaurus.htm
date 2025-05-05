@@ -159,11 +159,14 @@
 
                     if (cellule === "d") {
                         const mur = creerObj3DMur(objgl, TEX_MUR_OUVRABLE, 2.5);
+                        //creer different mur pour porte spawn?
+                        //const murSpawn = creerObj3DMur(objgl, TEX_MUR_SPAWN_, 2.5);
                         setPositionX(x, mur.transformations);
                         setPositionZ(z, mur.transformations);
                         setPositionY(0, mur.transformations);
                         objScene3D.posPorteSpawn = { x, z };
                         objScene3D.porteSpawn = mur;
+                        //objScene3D.porteSpawn = murSpawn;
                         tabObjets3D.push(mur);
                     }
                 }
@@ -549,6 +552,7 @@
     <audio id="sonNiveauReussi" src="Sons/niveauReussi.mp3" preload="auto"></audio>
     <audio id="sonJeuReussi" src="Sons/jeuReussi.mp3" preload="auto"></audio>
     <audio id="sonMur" src="Sons/mur.mp3" preload="auto"></audio>
+    <audio id="sonMurOuvreur" src="Sons/murOuvreur.mp3" preload="auto"></audio>
     <audio id="sonTempsFini" src="Sons/sonTempsFini.mp3" preload="auto"></audio>
 
 </body>
