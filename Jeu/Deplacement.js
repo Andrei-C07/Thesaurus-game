@@ -95,7 +95,7 @@ function deplacerCamera() {
         fltX = getCibleCameraX(camera) - getPositionCameraX(camera);
         fltZ = getCibleCameraZ(camera) - getPositionCameraZ(camera);
         intDirection = (event.keyCode == 37) ? -1 : 1;
-        fltAngle = intDirection * Math.PI / 90; // Tourner 2 degrés
+        fltAngle = intDirection * Math.PI / 60; // Tourner 2 degrés
         fltXPrime = fltX * Math.cos(fltAngle) - fltZ * Math.sin(fltAngle);
         fltZPrime = fltX * Math.sin(fltAngle) + fltZ * Math.cos(fltAngle);
         setCibleCameraX(getPositionCameraX(camera) + fltXPrime, camera);
@@ -142,15 +142,11 @@ function deplacerCamera() {
             setTimeout(() => {
                 niveauSuivant(objgl, objProgShaders);
                 niveauEnTransition = false;
-            }, 1000);
+            }, 1000);                                                                                                                                   
         }
-
-
     }
     if (event.code === "Space" && !estEnVueMap) {
         utiliserOuvreur();
-        const sonMur = document.getElementById("sonMur");
-        if (sonMur) sonMur.play();
         return;
     }
     teleporterJoueurSiSurTeleporteur(objScene3D);
@@ -162,28 +158,11 @@ function deplacerCamera() {
     const surG = (map[joueurZ][joueurX] === "g");
     //console.log(`etaitSurE=${etaitSurE}, surE=${surE}, surG=${surG}, pos=(${joueurX},${joueurZ})`);
 
-    if (!aQuitteEnclos && etaitSurE && !surE) {
-        setTimeout(() => {
-            const joueurX = Math.floor(getPositionCameraX(camera));
-            const joueurZ = Math.floor(getPositionCameraZ(camera));
-            if (map[joueurZ][joueurX] === "g") {
-                aQuitteEnclos = true;
-                //console.log("Le joueur a bien quitté l’enclos via E vers un couloir.");
-    
-                const x = objScene3D.posPorteSpawn.x;
-                const z = objScene3D.posPorteSpawn.z;
-    
-                map[z][x] = "b";
-                const murBloc = creerObj3DMur(objgl, TEX_MUR, 2.5);
-                setPositionX(x, murBloc.transformations);
-                setPositionZ(z, murBloc.transformations);
-                setPositionY(0, murBloc.transformations);
-                objScene3D.tabObjets3D.push(murBloc);
-                document.getElementById("sonMur").play();
-                effacerCanevas(objgl);
-                dessiner(objgl, objProgShaders, objScene3D);
-            }
-        }, 850); 
+    if (joueurX === 15 && joueurZ === 12 && aQuitteEnclos == false) {
+        //console.log("Le joueur est sur la porte de sortie");
+        console.log("Le hbvhgvjghcgjfcgh");
+        monterPorteGraduellement(objScene3D.porteSpawn, objScene3D);
+        aQuitteEnclos = true;
     }
     etaitSurE = surE;
     
@@ -233,6 +212,8 @@ function utiliserOuvreur() {
         map[celluleZ][celluleX] = "g";
         if (memoNiveau && memoNiveau.mursOuverts) {
             memoNiveau.mursOuverts.push({ x: celluleX, z: celluleZ });
+            const sonMur = document.getElementById("sonMur");
+            if (sonMur) sonMur.play();
         }
 
 
