@@ -89,16 +89,6 @@ Aucune animation automatique obligatoire, mais c’est un plus apprécié.
 
 ---
 
-## 💯 Pondération
-
-- **Fonctionnement & respect des consignes** : 80%
-- **Interface** : 20%
-  - Originalité et esthétique
-  - Qualité des objets 3D, textures, couleurs
-  - Fluidité des mouvements
-  - Animation (bonus)
-
----
 
 ## ✉️ Remarque finale
 
