@@ -6,16 +6,6 @@
 
 ---
 
-## 📅 Remise
-
-- **Date limite** : Jeudi le 27 avril 2023 à 23h59m59s
-- **Format** : Jeu complet zippé à remettre sur LÉA (incluant images, sons et musiques)
-- **Nom du projet** : Thesaurus suivi des noms des membres de l’équipe
-- **Pénalité** : 10% par jour de retard (max 5 jours)
-- **Plagiat** : utilisation d’un jeu d’une autre équipe = note de 0%
-
----
-
 ## 🧱 Objets du jeu
 
 - Dédale (31x31)
